@@ -1,0 +1,376 @@
+{
+  "name": "46 · PDF Summariser (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 46 · PDF Summariser\nAny PDF that lands in Gmail or a Drive folder (invoice, quotation, GST notice, contract) → AI writes a **5-line summary** with the key ₹ numbers and dates and whether you must act → WhatsApp to the owner + a row in **PDF log**.\n\n**Setup (15 min)**\n1. Gmail nodes: add a **Gmail OAuth2** credential.\n2. Google Drive nodes: add a **Google Drive OAuth2** credential and replace YOUR_DRIVE_INBOX_FOLDER_URL.\n3. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **PDF log**: Received, Source, From, File, Kind, Action needed, Summary.\n4. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup). Replace YOUR_OWNER_WHATSAPP with the owner's WhatsApp number in 91XXXXXXXXXX format.\n5. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n\nScanned PDFs (photos) have no text: use agent 22 (Bill Reader) for those. Delete one trigger if you only need one.",
+        "height": 721,
+        "width": 400,
+        "color": 1
+      },
+      "id": "63aa37c7-859c-4346-aacf-0c48b6d1c9a6",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -180
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "has:attachment filename:pdf -in:sent"
+        },
+        "options": {
+          "downloadAttachments": true,
+          "dataPropertyAttachmentsPrefixName": "attachment_"
+        }
+      },
+      "id": "35d7c5e5-b8cc-4428-b4d8-47a4e5589357",
+      "name": "PDF in Gmail",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_DRIVE_INBOX_FOLDER_URL"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "id": "7ae5addd-124e-491b-b899-ae83f3f5463c",
+      "name": "PDF in Drive folder",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $input.item.binary || {};\nconst k = Object.keys(b).find(k => (b[k].fileName || '').toLowerCase().endsWith('.pdf'));\nif (!k) return null;\nreturn { json: { source: 'Gmail', title: $json.subject || '', from: $json.from?.text || '', file: b[k].fileName }, binary: { data: b[k] } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "6421e66e-e46f-4c9f-8227-5381ea627d93",
+      "name": "Tag: Gmail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "options": {}
+      },
+      "id": "4dfde474-a135-4ce8-a419-6db21a367442",
+      "name": "Download from Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        240,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const t = $('PDF in Drive folder').item.json;\nreturn { json: { source: 'Drive', title: t.name || '', from: 'Drive folder', file: t.name || 'file.pdf' }, binary: { data: $input.item.binary.data } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "10539ab5-3d78-4b23-bac7-f58d33dc6eb1",
+      "name": "Tag: Drive",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "data",
+        "options": {}
+      },
+      "id": "f4d0158b-fca7-40ea-8c42-2a9744e8f01f",
+      "name": "Read PDF text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Summarise this PDF for a busy small-business owner in India.\nFile: {{ (() => { try { return $('Tag: Gmail').item.json.file } catch (e) { return $('Tag: Drive').item.json.file } })() }}\n\nTEXT:\n{{ String($json.text || '').slice(0, 12000) }}\n\nsummary: exactly 5 short lines: what it is, who it is from, the key numbers (₹, dates), what the owner must do, by when. kind: invoice / quotation / contract / notice / report / other. action_needed: true if the owner must do something. Only facts from the text; say 'not stated' if missing.",
+        "hasOutputParser": true
+      },
+      "id": "942843e9-af28-4bff-b890-66c12cc092ec",
+      "name": "AI summarises",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "79b28a93-2d1c-4e35-a1da-284493f015ef",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        900,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"kind\": \"notice\",\n  \"summary\": \"1. GST notice ...\\n2. ...\",\n  \"action_needed\": true\n}"
+      },
+      "id": "5572f3ce-3935-47b0-b5b7-ba6eb1e45587",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pick = n => { try { return $(n).item.json; } catch (e) { return null; } };\nconst src = pick('Tag: Gmail') || pick('Tag: Drive') || {};\nconst o = $json.output;\nreturn { json: { Received: $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd HH:mm'), Source: src.source, From: src.from, File: src.file, Kind: o.kind, 'Action needed': o.action_needed ? 'yes' : 'no', Summary: o.summary } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "7c49df1c-6ad0-4e9d-bc7f-118b4c9677b7",
+      "name": "Summary row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PDF log"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "72ce3fac-7bf1-43b9-951e-1bd2c956e4f3",
+      "name": "PDF log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1580,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "textBody": "={{ $('Summary row').item.json['Action needed'] === 'yes' ? '⚠️ Action needed' : '📄 FYI' }}: *{{ $('Summary row').item.json.File }}* ({{ $('Summary row').item.json.Source }})\n{{ $('Summary row').item.json.Summary }}",
+        "additionalFields": {}
+      },
+      "id": "35c45609-e603-40c6-b90a-ecb738af5108",
+      "name": "WhatsApp owner",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "PDF in Gmail": {
+      "main": [
+        [
+          {
+            "node": "Tag: Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag: Gmail": {
+      "main": [
+        [
+          {
+            "node": "Read PDF text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF in Drive folder": {
+      "main": [
+        [
+          {
+            "node": "Download from Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download from Drive": {
+      "main": [
+        [
+          {
+            "node": "Tag: Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag: Drive": {
+      "main": [
+        [
+          {
+            "node": "Read PDF text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PDF text": {
+      "main": [
+        [
+          {
+            "node": "AI summarises",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI summarises": {
+      "main": [
+        [
+          {
+            "node": "Summary row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary row": {
+      "main": [
+        [
+          {
+            "node": "PDF log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF log": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI summarises",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI summarises",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

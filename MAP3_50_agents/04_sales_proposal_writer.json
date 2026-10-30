@@ -1,0 +1,406 @@
+{
+  "name": "04 · Proposal Writer (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 04 · Proposal Writer\nMove a lead to Stage = **proposal** in your sheet → AI writes a proposal from YOUR price list → saved as a Google Doc → a Gmail **draft** to the lead is ready for you to check and send.\n\n**Setup (15 min)**\n1. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Leads**: Lead ID, Name, Company, Email, Phone, Need, Budget, Notes, Stage, Proposal doc, Updated.\n2. **Your services & prices**: write your real services, ₹ prices and terms. The AI uses only these.\n3. Google Docs: add a **Google Docs OAuth2** credential. Gmail nodes: add a **Gmail OAuth2** credential.\n4. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n\nNothing is sent automatically: you open the draft, read it, press Send.",
+        "height": 616,
+        "width": 400,
+        "color": 1
+      },
+      "id": "8b2e70f7-8945-4d4f-b667-2ab56f845f8a",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "a9be2a42-acab-4800-b5d4-c4179b155944",
+      "name": "Every 15 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1a00c790-1899-400f-a9f7-6012f0db8d34",
+              "name": "business",
+              "value": "YOUR BUSINESS NAME",
+              "type": "string"
+            },
+            {
+              "id": "09ba22ae-417f-46c4-88d8-cc024935738d",
+              "name": "services",
+              "value": "EDIT THIS: Website (5 pages, 3 weeks) ₹25,000 | Google Business Profile setup ₹5,000 | Monthly SEO ₹8,000 per month | WhatsApp chatbot setup ₹15,000",
+              "type": "string"
+            },
+            {
+              "id": "30203c91-844a-4d27-86b8-201f8eabc611",
+              "name": "terms",
+              "value": "EDIT THIS: 50% advance, balance on delivery. Prices exclude 18% GST. Quote valid for 15 days.",
+              "type": "string"
+            },
+            {
+              "id": "1c10793d-5a1f-49e9-8c80-9d8bdfedba17",
+              "name": "signature",
+              "value": "YOUR NAME, YOUR BUSINESS NAME",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "71631b53-0708-49db-b5da-5f5d3296fa96",
+      "name": "Your services & prices",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Stage",
+              "lookupValue": "=proposal"
+            }
+          ]
+        }
+      },
+      "id": "5c9c103d-4481-4d42-8ff2-22550501d9ef",
+      "name": "Leads at proposal stage",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Leads tab: Lead ID, Name, Company, Email, Phone, Need, Budget, Notes, Stage, Proposal doc, Updated\nreturn $input.all().filter(i => i.json['Lead ID'] && i.json.Email && !i.json['Proposal doc']);"
+      },
+      "id": "8f0474e2-b250-4275-a1dd-728972106105",
+      "name": "Only new ones",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a short business proposal for this lead.\n\nLEAD: {{ $json.Name }} from {{ $json.Company }}\nWHAT THEY NEED: {{ $json.Need }}\nBUDGET THEY SHARED: {{ $json.Budget || 'not shared' }}\nOUR CALL NOTES: {{ $json.Notes || 'none' }}\n\nOUR SERVICES AND PRICES (use ONLY these, copy prices exactly):\n{{ $('Your services & prices').first().json.services }}\nOUR TERMS: {{ $('Your services & prices').first().json.terms }}\n\nproposal_text: plain text with these parts: Your need (2 lines, in their words), What we will do (only services from our list that fit), Price (from our list, in ₹), Timeline (only if it is in our list), Terms, Next step (a 15-minute call). If nothing in our list fits their need, say we will discuss it on a call; do not make up a service. Never offer a discount, a free extra or a guarantee of results. Sign as {{ $('Your services & prices').first().json.signature }}.\nemail_body: 4-6 short lines for the cover email, friendly, says the proposal is in the Google Doc link below.\nsubject: short email subject.",
+        "hasOutputParser": true
+      },
+      "id": "fd0f2986-7fad-4393-91f0-72d627fbc264",
+      "name": "AI writes proposal",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "77b8405e-c889-4e58-a3b4-a3e0a1dbc455",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        900,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"subject\": \"Proposal: website + Google Business setup for Sharma Sweets\",\n  \"proposal_title\": \"Proposal for Sharma Sweets\",\n  \"proposal_text\": \"Your need\\n...\",\n  \"email_body\": \"Hello Rakesh ji,\\n...\"\n}"
+      },
+      "id": "22f0b9ae-753d-483c-b6ec-4ad62d7b5a93",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "folderId": "default",
+        "title": "={{ $json.output.proposal_title }}"
+      },
+      "id": "4d71b4fd-3067-44e3-94cb-0afe5fc0f120",
+      "name": "Create Google Doc",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "object": "text",
+              "action": "insert",
+              "text": "={{ $('AI writes proposal').item.json.output.proposal_text }}"
+            }
+          ]
+        }
+      },
+      "id": "905b4672-0fa7-47fd-8d1c-24aefc7a8312",
+      "name": "Write proposal text",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('AI writes proposal').item.json.output.subject }}",
+        "message": "={{ $('AI writes proposal').item.json.output.email_body }}\n\nProposal: https://docs.google.com/document/d/{{ $('Create Google Doc').item.json.id }}/edit",
+        "options": {
+          "sendTo": "={{ $('Only new ones').item.json.Email }}"
+        }
+      },
+      "id": "68e1de5e-3963-43bf-b0f5-44779cead818",
+      "name": "Draft email to lead",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1900,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { json: { 'Lead ID': $('Only new ones').item.json['Lead ID'], Stage: 'proposal drafted',\n  'Proposal doc': 'https://docs.google.com/document/d/' + $('Create Google Doc').item.json.id + '/edit', Updated: $now.toFormat('yyyy-LL-dd HH:mm') } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "410ff744-e5f5-4b28-aa94-6d34aad891f0",
+      "name": "Row update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2140,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Lead ID"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "92fda01d-48b6-49ae-9a34-54c3458275e1",
+      "name": "Update lead row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2380,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every 15 min": {
+      "main": [
+        [
+          {
+            "node": "Your services & prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Your services & prices": {
+      "main": [
+        [
+          {
+            "node": "Leads at proposal stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leads at proposal stage": {
+      "main": [
+        [
+          {
+            "node": "Only new ones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only new ones": {
+      "main": [
+        [
+          {
+            "node": "AI writes proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes proposal": {
+      "main": [
+        [
+          {
+            "node": "Create Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Doc": {
+      "main": [
+        [
+          {
+            "node": "Write proposal text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write proposal text": {
+      "main": [
+        [
+          {
+            "node": "Draft email to lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft email to lead": {
+      "main": [
+        [
+          {
+            "node": "Row update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row update": {
+      "main": [
+        [
+          {
+            "node": "Update lead row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI writes proposal",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI writes proposal",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

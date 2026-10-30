@@ -1,0 +1,560 @@
+{
+  "name": "33 · Leave Bot (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 33 · Leave Bot\nStaff WhatsApp \"sick leave tomorrow\" → AI reads the dates and type → row in the **Leave** sheet → manager gets **Approve / Decline** buttons on WhatsApp → the employee is told the answer and the sheet is updated. Unknown numbers are ignored.\n\n**Setup (15 min)**\n1. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Staff**: Name, Phone (91XXXXXXXXXX), Manager phone. Tab **Leave**: Leave ID, Requested, Name, Phone, Manager, From, To, Days, Type, Reason, Status.\n2. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup). Replace YOUR_OWNER_WHATSAPP with the owner's WhatsApp number in 91XXXXXXXXXX format. (fallback approver)\n3. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n\nThe workflow waits for the manager's tap, so keep it active.",
+        "height": 595,
+        "width": 420,
+        "color": 1
+      },
+      "id": "5ba0f9cd-2786-4cee-847b-d12440dbb781",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "df28b726-f354-4ced-8863-7b74432e875f",
+      "name": "Staff WhatsApp",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Staff"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Phone",
+              "lookupValue": "={{ $json.messages?.[0]?.from }}"
+            }
+          ]
+        }
+      },
+      "id": "2d22ff75-40a6-40d9-824f-425e3e30806b",
+      "name": "Find employee",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ !!$json.Name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3979ed89-d22a-4f49-8af7-8cec8a8db0a0",
+      "name": "Known staff?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=An employee of YOUR BUSINESS NAME sent this WhatsApp message: \"{{ $('Staff WhatsApp').item.json.messages?.[0]?.text?.body }}\"\nToday is {{ $now.setZone('Asia/Kolkata').toFormat('cccc, yyyy-LL-dd') }}.\n\nIs it a leave request? If yes, work out from_date and to_date (yyyy-mm-dd; 'kal'/'tomorrow' = today + 1), days (number), type (sick / casual / personal / emergency / half-day) and a short reason. If it is not a leave request, is_leave_request=false and the rest null.",
+        "hasOutputParser": true
+      },
+      "id": "dc65937a-d01b-4154-9e07-c976c0570b0b",
+      "name": "AI reads request",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "3c516c2b-ce16-4fb4-9428-c29dd822bdaa",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        660,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"is_leave_request\": true,\n  \"from_date\": \"2026-10-29\",\n  \"to_date\": \"2026-10-30\",\n  \"days\": 2,\n  \"type\": \"sick\",\n  \"reason\": \"fever\"\n}"
+      },
+      "id": "f4b79d39-71ed-4316-bb8c-84a81979f3db",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        860,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.output.is_leave_request }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "643c3bd0-85f5-43c1-95e5-84aa34091dd4",
+      "name": "Leave request?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $('Find employee').item.json, o = $json.output;\nreturn { json: { 'Leave ID': 'L' + $now.setZone('Asia/Kolkata').toFormat('yyMMddHHmmss'), Requested: $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd HH:mm'), Name: e.Name, Phone: e.Phone,\n  Manager: e['Manager phone'] || 'YOUR_OWNER_WHATSAPP', From: o.from_date, To: o.to_date, Days: o.days, Type: o.type, Reason: o.reason, Status: 'pending' } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "4f211479-64d3-43d2-8746-06d11aae980e",
+      "name": "Leave row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leave"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "d593cceb-80f7-41eb-9da4-cf2be909cd4d",
+      "name": "Leave sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1580,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Leave row').item.json.Manager }}",
+        "message": "=🗓️ Leave request from *{{ $('Leave row').item.json.Name }}*\n{{ $('Leave row').item.json.Type }} leave, {{ $('Leave row').item.json.Days }} day(s): {{ $('Leave row').item.json.From }} to {{ $('Leave row').item.json.To }}\nReason: {{ $('Leave row').item.json.Reason }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "id": "8bc6431b-de10-4e19-a188-6e022a34ff88",
+      "name": "Ask manager",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "aa395efe-8680-41bb-9186-828dce764804",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2060,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Leave row').item.json.Phone }}",
+        "textBody": "=✅ {{ $('Leave row').item.json.Name }}, your leave from {{ $('Leave row').item.json.From }} to {{ $('Leave row').item.json.To }} is approved. Take care!",
+        "additionalFields": {}
+      },
+      "id": "982bc210-d601-412c-a6bf-11e53a8cbc47",
+      "name": "Tell: approved",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2300,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Leave row').item.json.Phone }}",
+        "textBody": "={{ $('Leave row').item.json.Name }}, your leave request for {{ $('Leave row').item.json.From }} was not approved. Please speak to your manager.",
+        "additionalFields": {}
+      },
+      "id": "67b41e72-c09a-4ff2-b4dc-91557ce82914",
+      "name": "Tell: not approved",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2300,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pick = n => { try { return $(n).item.json; } catch (e) { return null; } };\nreturn { json: { 'Leave ID': $('Leave row').item.json['Leave ID'], Status: pick('Tell: approved') ? 'approved' : 'not approved' } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "cc9d503d-6d51-45bc-b2a8-eaad62833971",
+      "name": "Status row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2540,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leave"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Leave ID"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "493f0603-41d0-496b-9d8f-4ff3cd06f941",
+      "name": "Update leave status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2780,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Find employee').item.json.Phone }}",
+        "textBody": "=Hi {{ $('Find employee').item.json.Name }}, I'm the leave bot 🙂 To ask for leave just write it, e.g. \"Sick leave tomorrow, fever\" or \"Leave 3 to 5 Nov for a family function\".",
+        "additionalFields": {}
+      },
+      "id": "1cede3c8-d3f6-47a8-9fed-a72d9bd0ea4a",
+      "name": "How to ask for leave",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Staff WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Find employee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find employee": {
+      "main": [
+        [
+          {
+            "node": "Known staff?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Known staff?": {
+      "main": [
+        [
+          {
+            "node": "AI reads request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI reads request",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI reads request",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI reads request": {
+      "main": [
+        [
+          {
+            "node": "Leave request?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leave request?": {
+      "main": [
+        [
+          {
+            "node": "Leave row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "How to ask for leave",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leave row": {
+      "main": [
+        [
+          {
+            "node": "Leave sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leave sheet": {
+      "main": [
+        [
+          {
+            "node": "Ask manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask manager": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Tell: approved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tell: not approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tell: approved": {
+      "main": [
+        [
+          {
+            "node": "Status row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tell: not approved": {
+      "main": [
+        [
+          {
+            "node": "Status row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status row": {
+      "main": [
+        [
+          {
+            "node": "Update leave status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

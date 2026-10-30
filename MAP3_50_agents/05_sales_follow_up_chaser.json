@@ -1,0 +1,500 @@
+{
+  "name": "05 · Follow-up Chaser (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 05 · Follow-up Chaser\nMost sales are lost because nobody follows up. This agent sends a WhatsApp follow-up on **day 1, 3 and 7** after your last talk with a lead, written by AI from your notes (no fake urgency). If the lead replies with interest (price, visit, ready to buy) you get an alert to call them.\n\n**Setup (10 min)**\n1. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Leads**: Lead ID, Name, Phone, Interested in, Last contact (yyyy-mm-dd), Notes, Status (open / won / lost / stop), Followups.\n2. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup). Replace YOUR_OWNER_WHATSAPP with the owner's WhatsApp number in 91XXXXXXXXXX format.\n3. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n\nLead buys or says STOP → change Status, follow-ups stop.",
+        "height": 658,
+        "width": 400,
+        "color": 1
+      },
+      "id": "ed2f7004-a64f-4cf4-9d94-45e652094ce8",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -220
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 11,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "ce90590b-62ae-4d92-9522-5e3137f2c540",
+      "name": "Daily 11 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "=open"
+            }
+          ]
+        }
+      },
+      "id": "91c4260f-a6fa-41c4-90c0-01aedf6ca330",
+      "name": "Open leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        -160
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Leads tab: Lead ID, Name, Phone, Interested in, Last contact (yyyy-mm-dd), Notes, Status (open / won / lost / stop), Followups\nconst out = [];\nfor (const { json: r } of $input.all()) {\n  if (!r.Phone || !r['Last contact']) continue;\n  const day = Math.round($now.setZone('Asia/Kolkata').startOf('day').diff(DateTime.fromISO(r['Last contact'], { zone: 'Asia/Kolkata' }).startOf('day'), 'days').days);\n  const done = String(r.Followups || '').split(',').map(s => s.trim()).filter(Boolean);\n  if ([1, 3, 7].includes(day) && !done.includes(String(day))) out.push({ json: { ...r, day, Followups: [...done, String(day)].join(',') } });\n}\nreturn out;"
+      },
+      "id": "41386a73-f123-4c63-89c1-45e6a2585e3b",
+      "name": "Day 1/3/7 due?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a WhatsApp follow-up to {{ $json.Name }}, who asked about {{ $json['Interested in'] }} {{ $json.day }} day(s) ago.\nOwner's notes from the last talk: \"{{ $json.Notes }}\"\nDay 1: thank them, mention one thing from the notes, invite questions. Day 3: one helpful nudge (ask what is holding them back, offer a quick call or visit). Day 7: last soft check-in, no pressure, they can reply STOP.\nMax 4 short lines, sign as YOUR BUSINESS NAME. No fake urgency ('only 1 left', 'price going up tomorrow'). If the notes mention a price, payment or delivery question, do not answer it: say the owner will call to discuss.\nRULES (never break these): You are an assistant for YOUR BUSINESS NAME, a small Indian business, not the owner. Never offer or hint at discounts, refunds, free items or compensation. Never promise delivery dates, results or guarantees that are not given in this prompt. Never invent prices, stock, policies or facts: use ONLY the data given in this prompt. Greet with 'Hello <name> ji' (never 'Namaste'). Reply in the customer's language (English, Hindi or Hinglish in Roman script).",
+        "hasOutputParser": true
+      },
+      "id": "bcae2730-7a1e-41b2-8311-d443d247eb87",
+      "name": "AI writes follow-up",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        860,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "id": "b1c27ba3-2226-42f1-aa81-18137ac812d1",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"message\": \"Hello Imran ji, thanks for visiting us yesterday ...\"\n}"
+      },
+      "id": "1f10be8f-a978-4faa-92a8-ea58b1a6d6a4",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1000,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Day 1/3/7 due?').item.json.Phone }}",
+        "textBody": "={{ $json.output.message }}",
+        "additionalFields": {}
+      },
+      "id": "020eb4de-55c8-4389-bf62-62b4f4b30cf6",
+      "name": "Send follow-up",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { json: { 'Lead ID': $('Day 1/3/7 due?').item.json['Lead ID'], Followups: $('Day 1/3/7 due?').item.json.Followups } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "f2a261e6-4eae-4343-a597-5cab330452f9",
+      "name": "Mark day sent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Lead ID"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "3e591756-da1f-4e67-ade8-0cf9c33255c8",
+      "name": "Update Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1720,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "7ddc9a20-c566-4795-95fc-0dbd56b5d3e7",
+      "name": "Lead replies",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=A lead named {{ $json.contacts?.[0]?.profile?.name || '(name unknown)' }} replied to our follow-up message: \"{{ $json.messages?.[0]?.text?.body }}\".\ninterest: hot (wants to buy, asks for final price, payment details, a visit or a call) | warm (has questions, thinking) | not_interested | stop (asked to stop messages).\nsummary: 1 line for the owner. reply: short warm reply (max 2 lines); for hot or money questions say the owner will call shortly.\nRULES (never break these): You are an assistant for YOUR BUSINESS NAME, a small Indian business, not the owner. Never offer or hint at discounts, refunds, free items or compensation. Never promise delivery dates, results or guarantees that are not given in this prompt. Never invent prices, stock, policies or facts: use ONLY the data given in this prompt. Greet with 'Hello <name> ji' (never 'Namaste'). Reply in the customer's language (English, Hindi or Hinglish in Roman script). Set handoff=true when the customer is angry or upset, asks for a refund, discount or compensation, mentions legal action, or asks anything you are not sure of. When handoff=true the reply must only say the owner will personally call back soon.",
+        "hasOutputParser": true
+      },
+      "id": "0782fb7c-79cd-45f4-85fd-3cc82b094dfc",
+      "name": "AI reads interest",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "e74e7915-b971-4924-befc-d64f432bded1",
+      "name": "AI model 2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        180,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"interest\": \"hot\",\n  \"summary\": \"wants to visit Saturday, asked final price\",\n  \"handoff\": true,\n  \"reply\": \"Hello Imran ji, great! The owner will call you shortly to fix the time.\"\n}"
+      },
+      "id": "54c7fb8d-0ab6-48fc-a022-3ea2c08a8691",
+      "name": "JSON shape 2",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        380,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.output.interest === 'hot' || $json.output.handoff }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f7717abb-43ef-47c5-b460-eb00f5a28dac",
+      "name": "Interested?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        680,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "textBody": "=🔥 Follow-up reply: {{ $('Lead replies').item.json.contacts?.[0]?.profile?.name || '' }} · {{ $('Lead replies').item.json.messages[0].from }}\n{{ $('AI reads interest').item.json.output.interest.toUpperCase() }}: {{ $('AI reads interest').item.json.output.summary }}\nCall now",
+        "additionalFields": {}
+      },
+      "id": "4f9ed873-8d84-48c3-9e01-b46bf603ecfe",
+      "name": "Alert owner",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1060,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Lead replies').item.json.messages[0].from }}",
+        "textBody": "={{ $('AI reads interest').item.json.output.reply }}",
+        "additionalFields": {}
+      },
+      "id": "33638826-fd42-4613-9204-35c46dbc095c",
+      "name": "Reply to lead",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        280
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 11 AM": {
+      "main": [
+        [
+          {
+            "node": "Open leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Open leads": {
+      "main": [
+        [
+          {
+            "node": "Day 1/3/7 due?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Day 1/3/7 due?": {
+      "main": [
+        [
+          {
+            "node": "AI writes follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes follow-up": {
+      "main": [
+        [
+          {
+            "node": "Send follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send follow-up": {
+      "main": [
+        [
+          {
+            "node": "Mark day sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark day sent": {
+      "main": [
+        [
+          {
+            "node": "Update Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI writes follow-up",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI writes follow-up",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead replies": {
+      "main": [
+        [
+          {
+            "node": "AI reads interest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model 2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI reads interest",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape 2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI reads interest",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI reads interest": {
+      "main": [
+        [
+          {
+            "node": "Interested?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Interested?": {
+      "main": [
+        [
+          {
+            "node": "Alert owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply to lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert owner": {
+      "main": [
+        [
+          {
+            "node": "Reply to lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,424 @@
+{
+  "name": "43 · Competitor Watcher (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 43 · Competitor Watcher\nEvery Monday it opens each competitor's pricing / menu / offers page, compares it with last week's copy and, if something changed, AI tells you **what** changed in plain words (new price, new offer). One WhatsApp report; no message if nothing changed.\n\n**Setup (10 min)**\n1. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Competitors**: Name, URL, Last hash, Last text, Last checked, Last change. Fill Name + URL only.\n2. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup). Replace YOUR_OWNER_WHATSAPP with the owner's WhatsApp number in 91XXXXXXXXXX format.\n3. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n\nThe first run only saves a snapshot. Pages that need a login or block bots will not work.",
+        "height": 637,
+        "width": 400,
+        "color": 1
+      },
+      "id": "2148d93b-8827-4592-a1ca-5e2124ac7a5b",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "e6bd5180-998a-434a-8e68-7305d0a35ec3",
+      "name": "Monday 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Competitors"
+        },
+        "options": {}
+      },
+      "id": "2c33b551-e046-4b50-8b55-703562d3e877",
+      "name": "Competitors",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.URL }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "id": "65856e28-22e8-4c3d-a087-a1da7439999a",
+      "name": "Fetch their page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Competitors tab: Name, URL (pricing / menu / offers page), Last hash, Last text, Last checked, Last change\nconst clean = h => String(h || '').replace(/<script[\\s\\S]*?<\\/script>|<style[\\s\\S]*?<\\/style>|<noscript[\\s\\S]*?<\\/noscript>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\\s+/g, ' ').trim();\nconst hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return String(h >>> 0); };\nconst comp = $('Competitors').item.json;\nconst text = clean($json.data).slice(0, 5000);\nconst h = hash(text);\nreturn { json: { Name: comp.Name, URL: comp.URL, old_text: comp['Last text'] || '', new_text: text, hash: h,\n  first_time: !comp['Last hash'], changed: !!comp['Last hash'] && String(comp['Last hash']) !== h && text.length > 50 } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "0ec9fed7-53c1-44ac-9549-cbc41ec7531c",
+      "name": "Clean + compare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.changed }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b235bd03-2215-47d1-acd9-15f218f672fe",
+      "name": "Changed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Competitor: {{ $json.Name }} ({{ $json.URL }}). Their page changed since last week.\nOLD:\n{{ $json.old_text.slice(0, 2500) }}\n\nNEW:\n{{ $json.new_text.slice(0, 2500) }}\n\nsummary: what actually changed, in 1-3 short lines (new prices with ₹, new offers, new products/services, removed items). Ignore dates, counters and cookie text. important: true if prices, offers or services changed. Only report what is in the text.",
+        "hasOutputParser": true
+      },
+      "id": "8e4e794e-0007-4d99-9fc3-8b1f139be2aa",
+      "name": "AI compares versions",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1200,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "524aeb04-27c7-4210-90d6-bf5db4cd8c76",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1140,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"summary\": \"Haircut price up from ₹199 to ₹249. New 'Diwali combo' at ₹999.\",\n  \"important\": true\n}"
+      },
+      "id": "d4a9eeef-2846-4d0b-9cf5-e8def76c2516",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pick = n => { try { return $(n).item.json; } catch (e) { return null; } };\nconst r = $('Clean + compare').item.json;\nconst ai = pick('AI compares versions');\nreturn { json: { Name: r.Name, 'Last hash': r.hash, 'Last text': r.new_text, 'Last checked': $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd'),\n  'Last change': ai ? ai.output.summary : (r.first_time ? 'first snapshot saved' : 'no change'), _important: ai ? ai.output.important : false, _changed: !!ai } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "a0417daf-bb64-4870-8b22-3a6acc1fbf40",
+      "name": "Snapshot row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { _important, _changed, ...row } = $json;\nreturn { json: row };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "c8e251de-a3a4-44e2-aa00-3a4881b084e1",
+      "name": "Remove helper fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Competitors"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Name"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "461d4aa4-fb29-47f2-a9b1-da2936481f01",
+      "name": "Save snapshot",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2060,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ch = $('Snapshot row').all().map(i => i.json).filter(r => r._changed);\nif (!ch.length) return [];\nreturn [{ json: { text: `🕵️ Competitor watch (${ch.length} changed):\\n\\n` + ch.sort((a, b) => b._important - a._important).map(r => `${r._important ? '🔴' : '•'} *${r.Name}*: ${r['Last change']}`).join('\\n\\n') } }];"
+      },
+      "id": "fa64b6ef-cc07-4ce7-9485-814d87059dba",
+      "name": "Weekly report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "textBody": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "2bcf0472-7c24-401d-bcce-e2cedbb83511",
+      "name": "WhatsApp owner",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2540,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Monday 9 AM": {
+      "main": [
+        [
+          {
+            "node": "Competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Competitors": {
+      "main": [
+        [
+          {
+            "node": "Fetch their page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch their page": {
+      "main": [
+        [
+          {
+            "node": "Clean + compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean + compare": {
+      "main": [
+        [
+          {
+            "node": "Changed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Changed?": {
+      "main": [
+        [
+          {
+            "node": "AI compares versions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Snapshot row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI compares versions",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI compares versions",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI compares versions": {
+      "main": [
+        [
+          {
+            "node": "Snapshot row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Snapshot row": {
+      "main": [
+        [
+          {
+            "node": "Remove helper fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove helper fields": {
+      "main": [
+        [
+          {
+            "node": "Save snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save snapshot": {
+      "main": [
+        [
+          {
+            "node": "Weekly report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly report": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

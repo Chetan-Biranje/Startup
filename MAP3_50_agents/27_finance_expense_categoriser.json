@@ -1,0 +1,436 @@
+{
+  "name": "27 · Expense Categoriser (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 27 · Expense Categoriser\nSnap a bill or receipt and send it to your Telegram bot or business WhatsApp → AI reads vendor, amount, GST and picks a category → new row in your **Expenses** sheet → you get a ✅ reply. Unclear photos are marked CHECK.\n\n**Setup (15 min)**\n1. Telegram nodes: add a **Telegram API** credential (bot token from @BotFather) and replace YOUR_TELEGRAM_CHAT_ID. (no chat ID needed here: it replies to the sender).\n2. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup).\n3. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Expenses**: Added, Date, Vendor, Amount, GST, Category, Mode, Confidence, Status, Sent by, Note.\n4. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini). (the model must support images; Claude does).\n\nUse only one of the two triggers if you like: just delete the other one.",
+        "height": 679,
+        "width": 400,
+        "color": 1
+      },
+      "id": "bdfc4c86-926b-4f39-a71e-addf0c8f8701",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": true
+        }
+      },
+      "id": "c3766908-34f9-4e5b-a117-71d33136a30d",
+      "name": "Receipt on Telegram",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "d6373edb-de26-480d-b0ad-f3a79b189f18",
+      "name": "Receipt on WhatsApp",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { json: { channel: 'telegram', chat: $json.message?.chat?.id, from: $json.message?.from?.first_name || '', note: $json.message?.caption || '' }, binary: $input.item.binary };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "fd7cb1b4-7260-434b-8161-6c8954fc01c7",
+      "name": "Tag: Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -140
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "mediaUrlGet",
+        "mediaGetId": "={{ $json.messages[0].image?.id || $json.messages[0].document?.id }}"
+      },
+      "id": "a97d02e6-1175-42e5-b2b2-478486ff07f0",
+      "name": "Get photo URL",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        240,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "075c25a6-587a-4416-a592-efb733290c9d",
+      "name": "Download photo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const t = $('Receipt on WhatsApp').item.json;\nreturn { json: { channel: 'whatsapp', chat: t.messages?.[0]?.from, from: t.contacts?.[0]?.profile?.name || '', note: t.messages?.[0]?.image?.caption || '' }, binary: $input.item.binary };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "2d506b1f-aa92-4940-9d37-8f6d936a9b47",
+      "name": "Tag: WhatsApp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=This photo is a bill or receipt for a business expense. The sender's note: \"{{ $json.note }}\".\nRead it and return: vendor, date (yyyy-mm-dd, null if not printed), amount (final total paid, number), gst (number, 0 if none), category (one of: Rent, Salary, Stock purchase, Raw material, Electricity, Internet/Phone, Fuel/Travel, Food/Tea, Repairs, Marketing, Bank charges, Other), payment_mode (cash / UPI / card / bank / unknown), confidence 0-1. Never guess numbers that are not readable: use null and low confidence.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "messageType": "imageBinary",
+              "binaryImageDataKey": "data"
+            }
+          ]
+        }
+      },
+      "id": "5140efc3-13fd-4268-b42d-fa96a13c801d",
+      "name": "AI reads receipt",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "fecd3ef3-2177-4971-a40b-486c2d3cb4d8",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        900,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"vendor\": \"Sri Balaji Electricals\",\n  \"date\": \"2026-10-27\",\n  \"amount\": 2360,\n  \"gst\": 360,\n  \"category\": \"Repairs\",\n  \"payment_mode\": \"UPI\",\n  \"confidence\": 0.92\n}"
+      },
+      "id": "1b319b5c-a7e8-4d0c-98a9-4047e6ee2ab3",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const pick = n => { try { return $(n).item.json; } catch (e) { return null; } };\nconst src = pick('Tag: Telegram') || pick('Tag: WhatsApp') || {};\nconst o = $json.output;\nreturn { json: { Added: $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd HH:mm'), Date: o.date || $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd'),\n  Vendor: o.vendor, Amount: o.amount, GST: o.gst, Category: o.category, Mode: o.payment_mode, Confidence: o.confidence,\n  Status: o.confidence < 0.7 || o.amount == null ? 'CHECK' : 'OK', 'Sent by': src.from, Note: src.note, channel: src.channel, chat: src.chat } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "a0e56043-bf4e-48de-b788-39256931ed65",
+      "name": "Expense row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Expenses"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "9ebbc9eb-4513-4f4f-b8ed-df8882bf1dbb",
+      "name": "Expenses sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1580,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Expense row').item.json.channel === 'telegram' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "03d5e5c0-5e8e-4ef0-9f18-3804e53bdaf1",
+      "name": "Came from Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1820,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Expense row').item.json.chat }}",
+        "text": "=✅ Saved: ₹{{ $('Expense row').item.json.Amount }} · {{ $('Expense row').item.json.Category }} · {{ $('Expense row').item.json.Vendor }}{{ $('Expense row').item.json.Status === 'CHECK' ? '\\n⚠️ Not fully readable, please check the row in the sheet.' : '' }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "09dc2c40-d8ce-45af-b3c6-015d5215a3eb",
+      "name": "Reply on Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2060,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Expense row').item.json.chat }}",
+        "textBody": "=✅ Saved: ₹{{ $('Expense row').item.json.Amount }} · {{ $('Expense row').item.json.Category }} · {{ $('Expense row').item.json.Vendor }}{{ $('Expense row').item.json.Status === 'CHECK' ? '\\n⚠️ Not fully readable, please check the row in the sheet.' : '' }}",
+        "additionalFields": {}
+      },
+      "id": "57e8d3b2-481f-4eee-ab8e-5df160504124",
+      "name": "Reply on WhatsApp",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2060,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Receipt on Telegram": {
+      "main": [
+        [
+          {
+            "node": "Tag: Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag: Telegram": {
+      "main": [
+        [
+          {
+            "node": "AI reads receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receipt on WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Get photo URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get photo URL": {
+      "main": [
+        [
+          {
+            "node": "Download photo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download photo": {
+      "main": [
+        [
+          {
+            "node": "Tag: WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag: WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "AI reads receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI reads receipt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI reads receipt",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI reads receipt": {
+      "main": [
+        [
+          {
+            "node": "Expense row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expense row": {
+      "main": [
+        [
+          {
+            "node": "Expenses sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expenses sheet": {
+      "main": [
+        [
+          {
+            "node": "Came from Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Came from Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Reply on Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply on WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,343 @@
+{
+  "name": "48 · Meeting Notes (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 48 · Meeting Notes\nPaste a meeting transcript in a form → AI writes clean notes (summary, decisions, action items with owner + due date) into a **Google Doc**, adds every action to your **Actions** sheet, and drafts a follow-up email to the attendees.\n\n**Setup (10 min)**\n1. Google Docs nodes: add a **Google Docs OAuth2** credential.\n2. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Actions**: Meeting, Date, Task, Owner, Due, Status, Notes.\n3. Gmail nodes: add a **Gmail OAuth2** credential.\n4. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n\nGet transcripts from Google Meet (Gemini notes), Zoom, or any voice-to-text app. Always tell people when a meeting is recorded.",
+        "height": 595,
+        "width": 400,
+        "color": 1
+      },
+      "id": "f4432d3c-2816-4154-961f-a0df0e6601ee",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Meeting → notes + action items",
+        "formDescription": "Paste the transcript (Google Meet / Zoom / WhatsApp voice-note text). Notes go to a Google Doc, actions to your sheet, and a follow-up email draft is created.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Meeting title",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Attendee emails (comma separated)"
+            },
+            {
+              "fieldLabel": "Transcript",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "72175018-b613-4385-94d6-61cb24b56c69",
+      "name": "Paste transcript",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Meeting: {{ $json['Meeting title'] }} on {{ $now.setZone('Asia/Kolkata').toFormat('d LLL yyyy') }}.\nTranscript:\n{{ String($json.Transcript).slice(0, 20000) }}\n\nReturn: summary (4-6 lines), decisions (list), actions (list of {task, owner, due}: due as yyyy-mm-dd only if a date was said, else 'not set'), open_questions (list), follow_up_email (a short polite email to attendees recapping decisions and actions). Only what was actually said; never invent owners or dates.",
+        "hasOutputParser": true
+      },
+      "id": "30ee0a2f-3351-4749-b6b4-e2ab2248b157",
+      "name": "AI writes notes",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "1db30f04-0f00-4816-9777-f70b9787e5d9",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        180,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"summary\": \"...\",\n  \"decisions\": [\n    \"...\"\n  ],\n  \"actions\": [\n    {\n      \"task\": \"Send revised quote\",\n      \"owner\": \"Arjun\",\n      \"due\": \"2026-10-31\"\n    }\n  ],\n  \"open_questions\": [\n    \"...\"\n  ],\n  \"follow_up_email\": \"Hi all, ...\"\n}"
+      },
+      "id": "5876a8f3-6cc3-406a-bc63-405578ba4654",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        380,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const o = $json.output, f = $('Paste transcript').item.json;\nconst L = a => (a || []).map(x => '• ' + x).join('\\n') || '• none';\nreturn { json: { title: `Notes – ${f['Meeting title']} – ${$now.setZone('Asia/Kolkata').toFormat('d LLL yyyy')}`,\n  body: `SUMMARY\\n${o.summary}\\n\\nDECISIONS\\n${L(o.decisions)}\\n\\nACTION ITEMS\\n${L((o.actions || []).map(a => `${a.task} – ${a.owner} – due ${a.due}`))}\\n\\nOPEN QUESTIONS\\n${L(o.open_questions)}` } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "1165cd46-6526-4042-aeb7-8c615803012f",
+      "name": "Notes text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "folderId": "default",
+        "title": "={{ $json.title }}"
+      },
+      "id": "e98419fb-37c2-4447-a55a-7e83f4f7f01e",
+      "name": "Create Google Doc",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        860,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "object": "text",
+              "action": "insert",
+              "text": "={{ $('Notes text').item.json.body }}"
+            }
+          ]
+        }
+      },
+      "id": "52379ef0-0658-473f-b0f3-f370eb1ad60f",
+      "name": "Write notes",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const o = $('AI writes notes').first().json.output, f = $('Paste transcript').first().json;\nreturn (o.actions || []).map(a => ({ json: { Meeting: f['Meeting title'], Date: $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd'), Task: a.task, Owner: a.owner, Due: a.due, Status: 'open',\n  Notes: 'https://docs.google.com/document/d/' + $('Create Google Doc').first().json.id } }));"
+      },
+      "id": "4dfa18bc-7052-4486-995e-a1391ba69a0d",
+      "name": "Action rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Actions"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "4cce5aea-15b9-4d0a-b816-f6f5f75f6b93",
+      "name": "Action items sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1580,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 1
+      },
+      "id": "a83e0aa5-eb7b-4e9c-9232-4c0f57fdeb79",
+      "name": "Only once",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Recap: {{ $('Paste transcript').first().json['Meeting title'] }}",
+        "message": "={{ $('AI writes notes').first().json.output.follow_up_email }}\n\nFull notes: https://docs.google.com/document/d/{{ $('Create Google Doc').first().json.id }}",
+        "options": {
+          "sendTo": "={{ $('Paste transcript').first().json['Attendee emails (comma separated)'] }}"
+        }
+      },
+      "id": "c8b02c54-159c-4204-9671-69f197a247fd",
+      "name": "Draft follow-up email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2060,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Paste transcript": {
+      "main": [
+        [
+          {
+            "node": "AI writes notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes notes": {
+      "main": [
+        [
+          {
+            "node": "Notes text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notes text": {
+      "main": [
+        [
+          {
+            "node": "Create Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Doc": {
+      "main": [
+        [
+          {
+            "node": "Write notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write notes": {
+      "main": [
+        [
+          {
+            "node": "Action rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Action rows": {
+      "main": [
+        [
+          {
+            "node": "Action items sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Action items sheet": {
+      "main": [
+        [
+          {
+            "node": "Only once",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only once": {
+      "main": [
+        [
+          {
+            "node": "Draft follow-up email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI writes notes",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI writes notes",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

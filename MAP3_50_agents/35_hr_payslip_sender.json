@@ -1,0 +1,470 @@
+{
+  "name": "35 · Payslip Sender (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 35 · Payslip Sender\nOn the 1st of every month it reads last month's **Payroll** sheet, checks every row adds up (code + AI sanity check), then turns each payslip into a **PDF** and emails it to the employee. If anything looks wrong, **nothing is sent** and the owner gets a WhatsApp with the problems.\n\n**Setup (15 min)**\n1. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Payroll**: Key, Month (yyyy-mm), Name, Email, Basic, HRA, Allowances, Overtime, Deductions, PF, ESI, TDS, Net pay, Days worked, Sent.\n2. PDF: run the free Gotenberg converter once (`docker run -d -p 3000:3000 gotenberg/gotenberg:8`) and replace YOUR_GOTENBERG_URL (e.g. http://localhost:3000).\n3. Gmail nodes: add a **Gmail OAuth2** credential.\n4. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup). Replace YOUR_OWNER_WHATSAPP with the owner's WhatsApp number in 91XXXXXXXXXX format.\n5. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n\nThe AI never changes numbers; it only checks them.",
+        "height": 679,
+        "width": 420,
+        "color": 1
+      },
+      "id": "1b3e04cf-7de2-40f3-af03-e36d559cbcb7",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "triggerAtDayOfMonth": 1,
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "id": "34f0bf3c-a92a-444c-84d1-06d1bc70fd90",
+      "name": "1st of month 10 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Payroll"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Month",
+              "lookupValue": "={{ $now.setZone('Asia/Kolkata').minus({ months: 1 }).toFormat('yyyy-LL') }}"
+            }
+          ]
+        }
+      },
+      "id": "d26b7f6c-68dd-4848-b666-ccc7794cf2a3",
+      "name": "Last month's payroll",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Payroll tab: Key (e.g. 2026-09-E01), Month (yyyy-mm), Name, Email, Basic, HRA, Allowances, Overtime, Deductions, PF, ESI, TDS, Net pay, Days worked, Sent\nconst num = v => Number(String(v ?? '').replace(/[^0-9.-]/g, '')) || 0;\nconst rows = $input.all().map(i => i.json).filter(r => r.Name && r.Sent !== 'yes');\nconst issues = [];\nfor (const r of rows) {\n  const calc = num(r.Basic) + num(r.HRA) + num(r.Allowances) + num(r.Overtime) - num(r.Deductions) - num(r.PF) - num(r.ESI) - num(r.TDS);\n  if (Math.abs(calc - num(r['Net pay'])) > 1) issues.push(`${r.Name}: net pay ${r['Net pay']} but the parts add up to ${calc}`);\n  if (!r.Email) issues.push(`${r.Name}: no email`);\n}\nreturn [{ json: { month: $now.setZone('Asia/Kolkata').minus({ months: 1 }).toFormat('LLLL yyyy'), count: rows.length, total_net: rows.reduce((s, r) => s + num(r['Net pay']), 0), issues, rows } }];"
+      },
+      "id": "b31c1bd5-f4a2-4689-836c-c3833e11b29b",
+      "name": "Totals + checks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You check a small Indian business's payroll before payslips go out. Month: {{ $json.month }}. Employees: {{ $json.count }}. Total net pay: ₹{{ $json.total_net }}.\nProblems found by code: {{ JSON.stringify($json.issues) }}\nRows: {{ JSON.stringify($json.rows) }}\n\nok = true only if the code found no problems and nothing else looks clearly wrong (a net pay far higher than others for the same role, negative values, 0 days worked with pay). summary: one line for the owner. issues: a short list of problems (empty if ok). Never change any number.",
+        "hasOutputParser": true
+      },
+      "id": "8878279c-3eb4-4e21-9fad-dc9c33e669c7",
+      "name": "AI payroll check",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "445aae97-c402-48e9-bf22-ba8291fe9467",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        660,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"ok\": true,\n  \"summary\": \"8 payslips, total ₹1,86,400, all rows add up.\",\n  \"issues\": []\n}"
+      },
+      "id": "10594758-f6fc-4c3b-8fa9-3b054aad1d81",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        860,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.output.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "505c68e6-0fbf-4014-acb1-9be88181894d",
+      "name": "All OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const t = $('Totals + checks').first().json;\nconst rs = v => '₹' + Number(v || 0).toLocaleString('en-IN');\nconst line = (k, v) => `<tr><td style=\"padding:4px 12px\">${k}</td><td style=\"padding:4px 12px;text-align:right\">${rs(v)}</td></tr>`;\nreturn t.rows.map(r => ({ json: { Key: r.Key, Name: r.Name, Email: r.Email, subject: `Payslip – ${t.month}`,\n  html: `<p>Hello ${r.Name},</p><p>Your payslip for <b>${t.month}</b> (${r['Days worked'] || '-'} days worked):</p><table style=\"border-collapse:collapse;font-family:Arial\">` +\n    line('Basic', r.Basic) + line('HRA', r.HRA) + line('Allowances', r.Allowances) + line('Overtime', r.Overtime) + line('Deductions', -Number(r.Deductions || 0)) +\n    line('PF', -Number(r.PF || 0)) + line('ESI', -Number(r.ESI || 0)) + line('TDS', -Number(r.TDS || 0)) +\n    `<tr><td style=\"padding:6px 12px\"><b>Net pay</b></td><td style=\"padding:6px 12px;text-align:right\"><b>${rs(r['Net pay'])}</b></td></tr></table>` +\n    `<p>Questions? Reply to this email.</p><p>– YOUR BUSINESS NAME</p>` } }));"
+      },
+      "id": "270110a9-7cf9-4a6e-99b8-14f92054b8a6",
+      "name": "One payslip each",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "html",
+        "options": {
+          "fileName": "index.html"
+        }
+      },
+      "id": "013672ea-8a11-4fb5-9369-6c732e65d1dd",
+      "name": "HTML to file",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1580,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_GOTENBERG_URL/forms/chromium/convert/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "payslip"
+            }
+          }
+        }
+      },
+      "id": "31c09cf6-531a-4ad9-9a42-06dda309a1f2",
+      "name": "Make PDF (Gotenberg)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('One payslip each').item.json.Email }}",
+        "subject": "={{ $('One payslip each').item.json.subject }}",
+        "emailType": "html",
+        "message": "={{ $('One payslip each').item.json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "payslip"
+              }
+            ]
+          }
+        }
+      },
+      "id": "63c7a32a-7da6-4d8f-ae6e-67747dceab4e",
+      "name": "Email payslip",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2060,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { json: { Key: $('One payslip each').item.json.Key, Sent: 'yes' } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "97d6b27c-7956-41c8-9a1b-931d330d8494",
+      "name": "Mark sent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Payroll"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Key"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "23ccd881-042f-49ef-b799-9d81af256828",
+      "name": "Update payroll",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2540,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "textBody": "=⚠️ Payslips for {{ $('Totals + checks').item.json.month }} were NOT sent.\n{{ $json.output.summary }}\n{{ $json.output.issues.join('\\n') }}\nFix the Payroll sheet and run the workflow again.",
+        "additionalFields": {}
+      },
+      "id": "d1921598-011a-4e75-aa1c-160769f53d51",
+      "name": "Owner: fix payroll first",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "1st of month 10 AM": {
+      "main": [
+        [
+          {
+            "node": "Last month's payroll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Last month's payroll": {
+      "main": [
+        [
+          {
+            "node": "Totals + checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Totals + checks": {
+      "main": [
+        [
+          {
+            "node": "AI payroll check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI payroll check": {
+      "main": [
+        [
+          {
+            "node": "All OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI payroll check",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI payroll check",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All OK?": {
+      "main": [
+        [
+          {
+            "node": "One payslip each",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Owner: fix payroll first",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One payslip each": {
+      "main": [
+        [
+          {
+            "node": "HTML to file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML to file": {
+      "main": [
+        [
+          {
+            "node": "Make PDF (Gotenberg)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make PDF (Gotenberg)": {
+      "main": [
+        [
+          {
+            "node": "Email payslip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email payslip": {
+      "main": [
+        [
+          {
+            "node": "Mark sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark sent": {
+      "main": [
+        [
+          {
+            "node": "Update payroll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

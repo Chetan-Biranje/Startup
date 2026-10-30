@@ -1,0 +1,316 @@
+{
+  "name": "31 · Offer Letter Writer (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 31 · Offer Letter Writer\nFill a 1-minute form (name, role, salary, joining date) → AI writes a clean offer letter as a **Google Doc** → a Gmail **draft** to the candidate with the link → logged in **Offers**. You check and send.\n\n**Setup (10 min)**\n1. Google Docs nodes: add a **Google Docs OAuth2** credential (the doc is created in your Drive root).\n2. Gmail nodes: add a **Gmail OAuth2** credential.\n3. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Offers**: Date, Name, Email, Role, Salary, Joining, Doc, Status.\n4. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n5. Replace YOUR BUSINESS ADDRESS in the prompt.\n\nOpen the form from the trigger's Production URL. Get legal terms checked once by your CA / lawyer.",
+        "height": 616,
+        "width": 400,
+        "color": 1
+      },
+      "id": "119c0e2f-7211-4bbb-8714-077b2af2af05",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "New offer letter",
+        "formDescription": "HR / owner only. The letter is saved as a Google Doc and an email DRAFT is created. Nothing is sent until you send it.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Candidate name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Candidate email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Role",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Monthly salary (₹)",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Joining date",
+              "fieldType": "date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Work location"
+            },
+            {
+              "fieldLabel": "Reporting to"
+            },
+            {
+              "fieldLabel": "Probation (months)",
+              "fieldType": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7b0fb8ef-0f4e-4b34-9728-6ebb7edb08b7",
+      "name": "Offer letter form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a simple, professional offer letter in English for an Indian small business.\nCompany: YOUR BUSINESS NAME (address: YOUR BUSINESS ADDRESS)\nCandidate: {{ $json['Candidate name'] }}\nRole: {{ $json.Role }}\nMonthly salary (CTC): ₹{{ $json['Monthly salary (₹)'] }}\nJoining date: {{ $json['Joining date'] }}\nWork location: {{ $json['Work location'] || 'our office' }}\nReporting to: {{ $json['Reporting to'] || 'the owner' }}\nProbation: {{ $json['Probation (months)'] || 3 }} months\n\nSections: date, greeting, offer of the role, salary (exact number above, per month), joining date, location and reporting, probation, working hours 'as per company policy', notice period 'as per company policy', a line asking them to reply to accept, sign-off 'For YOUR BUSINESS NAME, Authorised Signatory'. Use ONLY these facts. No bonuses, benefits, increments or legal clauses that are not given. letter_title like 'Offer Letter – <name> – <role>'. email_body: 3 short lines asking them to read the attached letter and reply to accept.",
+        "hasOutputParser": true
+      },
+      "id": "19a914f9-769d-4025-849d-4c7a71fa552c",
+      "name": "AI writes offer letter",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "4d4401ff-7dd4-40ea-bb7c-dd25bd7915bf",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        180,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"letter_title\": \"Offer Letter – Arjun Reddy – Store Manager\",\n  \"letter_text\": \"28 October 2026\\n\\nDear Arjun, ...\",\n  \"subject\": \"Your offer letter from YOUR BUSINESS NAME\",\n  \"email_body\": \"Hello Arjun, ...\"\n}"
+      },
+      "id": "0386717f-5172-4e30-947e-b832187e2313",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        380,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "folderId": "default",
+        "title": "={{ $json.output.letter_title }}"
+      },
+      "id": "d1eab293-85bf-41db-b3ee-97af86295def",
+      "name": "Create Google Doc",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        620,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "object": "text",
+              "action": "insert",
+              "text": "={{ $('AI writes offer letter').item.json.output.letter_text }}"
+            }
+          ]
+        }
+      },
+      "id": "6d75809d-6e74-42d4-9432-fa67bff5db32",
+      "name": "Write letter text",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        860,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('AI writes offer letter').item.json.output.subject }}",
+        "message": "={{ $('AI writes offer letter').item.json.output.email_body }}\n\nOffer letter: https://docs.google.com/document/d/{{ $('Create Google Doc').item.json.id }}",
+        "options": {
+          "sendTo": "={{ $('Offer letter form').item.json['Candidate email'] }}"
+        }
+      },
+      "id": "2a58a127-7d93-4430-8140-9abbe7cf86cd",
+      "name": "Draft email to candidate",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const f = $('Offer letter form').item.json;\nreturn { json: { Date: $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd'), Name: f['Candidate name'], Email: f['Candidate email'], Role: f.Role,\n  Salary: f['Monthly salary (₹)'], Joining: f['Joining date'], Doc: 'https://docs.google.com/document/d/' + $('Create Google Doc').item.json.id, Status: 'draft ready' } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "9f15921b-fdb4-4121-8ca2-297bca258d75",
+      "name": "Log row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Offers"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "7fc80042-cb28-4698-a770-fec87d790931",
+      "name": "Offer log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1580,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Offer letter form": {
+      "main": [
+        [
+          {
+            "node": "AI writes offer letter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes offer letter": {
+      "main": [
+        [
+          {
+            "node": "Create Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Doc": {
+      "main": [
+        [
+          {
+            "node": "Write letter text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write letter text": {
+      "main": [
+        [
+          {
+            "node": "Draft email to candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft email to candidate": {
+      "main": [
+        [
+          {
+            "node": "Log row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log row": {
+      "main": [
+        [
+          {
+            "node": "Offer log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI writes offer letter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI writes offer letter",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

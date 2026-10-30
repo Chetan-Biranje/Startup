@@ -1,0 +1,422 @@
+{
+  "name": "34 · Employee Doc Collector (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 34 · Employee Doc Collector\nNew staff send Aadhaar, PAN, photo, bank passbook on WhatsApp → AI tags which document it is → saved in your Drive as **Name_DocType** → the employee is told what is still pending. No more chasing papers.\n\n**Setup (15 min)**\n1. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup).\n2. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Employees**: Name, Phone, Required, Received, Last doc, Pending.\n3. Google Drive: add a **Google Drive OAuth2** credential and replace YOUR_DRIVE_EMPLOYEE_DOCS_FOLDER_URL. Keep this folder private: these are ID documents.\n4. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).",
+        "height": 574,
+        "width": 400,
+        "color": 1
+      },
+      "id": "99c4f5de-faf0-40bb-b954-bb85fa4ff57b",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "0c570921-37a9-46b7-b34d-fff71e3b7cb5",
+      "name": "Staff WhatsApp",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Employees"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Phone",
+              "lookupValue": "={{ $json.messages?.[0]?.from }}"
+            }
+          ]
+        }
+      },
+      "id": "b4173a3f-2adf-4aff-9588-e7960e929277",
+      "name": "Find employee",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ !!$json.Name && !!($('Staff WhatsApp').item.json.messages?.[0]?.document || $('Staff WhatsApp').item.json.messages?.[0]?.image) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "472cc8b4-7233-4d6d-b671-84cb5cec3c88",
+      "name": "Known + has a file?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=A new employee sent a joining document on WhatsApp.\nFile name: {{ $('Staff WhatsApp').item.json.messages?.[0]?.document?.filename || 'photo' }}\nCaption: {{ $('Staff WhatsApp').item.json.messages?.[0]?.document?.caption || $('Staff WhatsApp').item.json.messages?.[0]?.image?.caption || '' }}\nPick doc_type from: Aadhaar, PAN, Photo, BankPassbook, EducationCertificate, ExperienceLetter, RelievingLetter, AddressProof, Other.",
+        "hasOutputParser": true
+      },
+      "id": "4698310a-52ff-4c31-ab39-c9bc0e98cc75",
+      "name": "AI tags document",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "633a5899-551a-49cf-989e-1cdb8e97e8d4",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        660,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"doc_type\": \"PAN\"\n}"
+      },
+      "id": "7adb1d51-4e91-48c3-ac8b-744df01968e5",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        860,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "mediaUrlGet",
+        "mediaGetId": "={{ $('Staff WhatsApp').item.json.messages[0].document?.id || $('Staff WhatsApp').item.json.messages[0].image?.id }}"
+      },
+      "id": "891af469-3d7b-4f88-b398-823c990e5a10",
+      "name": "Get media URL",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "whatsAppApi",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "02b22175-ee5c-4916-a881-25a8a1eb4d18",
+      "name": "Download file",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Find employee').item.json.Name }}_{{ $('AI tags document').item.json.output.doc_type }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_DRIVE_EMPLOYEE_DOCS_FOLDER_URL"
+        },
+        "options": {}
+      },
+      "id": "c01dde77-91ff-4232-bdb2-8cff9e00f412",
+      "name": "Save to employee folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1580,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Employees tab: Name, Phone, Required (comma list, e.g. Aadhaar, PAN, Photo, BankPassbook), Received, Last doc, Pending\nconst e = $('Find employee').first().json;\nconst got = $('AI tags document').first().json.output.doc_type;\nconst req = String(e.Required || 'Aadhaar, PAN, Photo, BankPassbook').split(',').map(s => s.trim()).filter(Boolean);\nconst rec = new Set(String(e.Received || '').split(',').map(s => s.trim()).filter(Boolean)); rec.add(got);\nconst pending = req.filter(d => !rec.has(d));\nreturn [{ json: { Phone: e.Phone, Received: [...rec].join(', '), 'Last doc': got, Pending: pending.join(', ') || 'none',\n  reply: `✅ ${got} received, ${e.Name}. Saved safely.\\n` + (pending.length ? `Still needed: *${pending.join(', ')}*` : 'All your joining documents are in 🎉 Thank you!') } }];"
+      },
+      "id": "76cebc90-9814-42e7-92a6-4df94df909c8",
+      "name": "What's pending",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1820,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { reply, ...row } = $json;\nreturn { json: row };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "522e471f-c883-422e-8835-9e9beafdd649",
+      "name": "Row update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2060,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Employees"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Phone"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "e556ca11-f5bb-45dd-a3e5-b13906af4de3",
+      "name": "Update employee",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2300,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $json.Phone }}",
+        "textBody": "={{ $json.reply }}\n– YOUR BUSINESS NAME",
+        "additionalFields": {}
+      },
+      "id": "08fcca30-3e43-4369-a6a8-6a8f354080d1",
+      "name": "Confirm to employee",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2060,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Staff WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Find employee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find employee": {
+      "main": [
+        [
+          {
+            "node": "Known + has a file?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Known + has a file?": {
+      "main": [
+        [
+          {
+            "node": "AI tags document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI tags document",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI tags document",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI tags document": {
+      "main": [
+        [
+          {
+            "node": "Get media URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get media URL": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Save to employee folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to employee folder": {
+      "main": [
+        [
+          {
+            "node": "What's pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "What's pending": {
+      "main": [
+        [
+          {
+            "node": "Row update",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Confirm to employee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row update": {
+      "main": [
+        [
+          {
+            "node": "Update employee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

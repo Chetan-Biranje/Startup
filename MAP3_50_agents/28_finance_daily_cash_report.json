@@ -1,0 +1,312 @@
+{
+  "name": "28 · Daily Cash Report (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 28 · Daily Cash Report\nEvery night at 9 PM it adds up today's **Sales** and **Expenses** sheets (UPI / cash / card, spend by category) and AI sends the owner a 6-line WhatsApp report: sales, spends, net and how much cash should be in the drawer. Logged in **Daily cash**.\n\n**Setup (10 min)**\n1. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Sales**: Date (yyyy-mm-dd), Bill no, Customer, Amount, Mode. Tab **Expenses**: Date, Vendor, Amount, Category, Mode (agent 27 fills this). Tab **Daily cash**.\n2. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup). Replace YOUR_OWNER_WHATSAPP with the owner's WhatsApp number in 91XXXXXXXXXX format.\n3. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n\nThe maths is done in code, the AI only writes the words.",
+        "height": 658,
+        "width": 400,
+        "color": 1
+      },
+      "id": "c54ab59c-b23f-485e-8be9-d8a5c10e7854",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 21,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "87a05390-f8b6-4702-87f1-8ab51a63ced3",
+      "name": "Every night 9 PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sales"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Date",
+              "lookupValue": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd') }}"
+            }
+          ]
+        }
+      },
+      "id": "45d15bbb-d911-4a69-ae77-25e53662f065",
+      "name": "Today's sales",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Expenses"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Date",
+              "lookupValue": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd') }}"
+            }
+          ]
+        }
+      },
+      "id": "52fc6f57-3f97-40fe-838b-ccc820b1bdf4",
+      "name": "Today's expenses",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sales tab: Date, Bill no, Customer, Amount, Mode (cash/UPI/card)   Expenses tab: Date, Vendor, Amount, Category, Mode\nconst num = v => Number(String(v ?? '').replace(/[^0-9.-]/g, '')) || 0;\nconst S = $('Today\\'s sales').all().map(i => i.json).filter(r => r.Amount !== undefined && r.Amount !== '');\nconst E = $('Today\\'s expenses').all().map(i => i.json).filter(r => r.Amount !== undefined && r.Amount !== '');\nconst sum = (a, f = () => true) => a.filter(f).reduce((s, r) => s + num(r.Amount), 0);\nconst by = (a, k) => a.reduce((m, r) => (m[r[k] || 'Other'] = (m[r[k] || 'Other'] || 0) + num(r.Amount), m), {});\nconst sales = sum(S), spent = sum(E);\nreturn [{ json: { date: $now.setZone('Asia/Kolkata').toFormat('d LLL yyyy'), bills: S.length, sales, spent, net: sales - spent,\n  sales_by_mode: by(S, 'Mode'), spend_by_category: by(E, 'Category'), cash_in: sum(S, r => String(r.Mode).toLowerCase() === 'cash'), cash_out: sum(E, r => String(r.Mode).toLowerCase() === 'cash'),\n  biggest_expense: E.sort((a, b) => num(b.Amount) - num(a.Amount))[0] || null } }];"
+      },
+      "id": "de0fad62-d89b-4fc7-82a7-1b3b997b680d",
+      "name": "Totals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write tonight's WhatsApp cash report for the owner of YOUR BUSINESS NAME from these exact numbers (₹):\n{{ JSON.stringify($json, null, 1) }}\n\nFormat: first line '📊 Cash report {{ $json.date }}'. Then 4-6 short lines: sales and number of bills, UPI vs cash vs card, total spent and the biggest expense, net for the day, and cash that should be in the drawer (cash_in minus cash_out). End with ONE practical observation. Use ₹ with Indian commas. Use only these numbers; never invent or estimate. If there were no sales, say so plainly. Output only the message.",
+        "hasOutputParser": false
+      },
+      "id": "7030afc1-2757-4503-b664-56046264758f",
+      "name": "AI writes cash report",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "4d2b5d02-aa91-4b54-bbd2-fe7f835636ad",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        900,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "textBody": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "5f42b00d-9e9d-420b-8c64-b2777d81e0f4",
+      "name": "WhatsApp owner",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const t = $('Totals').first().json;\nreturn [{ json: { Date: $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd'), Bills: t.bills, Sales: t.sales, Spent: t.spent, Net: t.net, 'Cash in drawer': t.cash_in - t.cash_out } }];"
+      },
+      "id": "f742b172-3684-4513-9bc8-ad231bc7caa1",
+      "name": "Log row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Daily cash"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "8c553504-c4f7-4ae9-b703-1fa63c252ce3",
+      "name": "Daily cash log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1820,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every night 9 PM": {
+      "main": [
+        [
+          {
+            "node": "Today's sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Today's sales": {
+      "main": [
+        [
+          {
+            "node": "Today's expenses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Today's expenses": {
+      "main": [
+        [
+          {
+            "node": "Totals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Totals": {
+      "main": [
+        [
+          {
+            "node": "AI writes cash report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes cash report": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp owner": {
+      "main": [
+        [
+          {
+            "node": "Log row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log row": {
+      "main": [
+        [
+          {
+            "node": "Daily cash log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI writes cash report",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

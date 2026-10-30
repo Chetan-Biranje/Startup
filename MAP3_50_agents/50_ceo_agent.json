@@ -1,0 +1,1060 @@
+{
+  "name": "50 · CEO Agent (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 50 · CEO Agent\nYour AI CEO. Message it on WhatsApp or Telegram (\"aaj ka business kaisa hai?\", \"kaun leave pe hai?\", \"Diwali offer bhejo\") → it decides which of your **7 teams** to call, runs those workflows, and replies with one short answer. It always asks you before anything is sent to customers. Every morning at 8 AM it also sends you yesterday's numbers.\n\n**Setup (30 min)**\n1. For each team you want, open a workflow of that department (e.g. 28 Daily Cash for Finance), add a **When Executed by Another Workflow** trigger with one input `request`, and make its last node return the answer as text. Copy that workflow's ID (from its URL) into the matching tool: YOUR_SALES_WORKFLOW_ID, YOUR_SUPPORT_WORKFLOW_ID, ... Delete tools you don't need.\n2. AI model node: add an **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n3. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup). Replace YOUR_OWNER_WHATSAPP with the owner's WhatsApp number in 91XXXXXXXXXX format.\n4. Telegram nodes: add a **Telegram API** credential (bot token from @BotFather) and replace YOUR_TELEGRAM_CHAT_ID.\n5. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tabs: Leads, Sales, Expenses, Tickets, Tasks, Stock (same sheet as your other agents).\n\nOnly the owner's number / chat ID can talk to it. Use one WhatsApp trigger per Meta app (see README tips).",
+        "height": 847,
+        "width": 440,
+        "color": 1
+      },
+      "id": "4da1df84-893d-447a-a5e5-51a8b1b70d9e",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -520,
+        -180
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "67d3c193-4a81-47f6-a437-077cb40766d4",
+      "name": "Owner on WhatsApp",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "e59c2b8f-5410-43fd-acec-7cb1ac39947a",
+      "name": "Owner on Telegram",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const m = $json.messages?.[0];\nif (!m?.text?.body) return null;\nreturn { json: { channel: 'whatsapp', chat: m.from, text: m.text.body } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "e6091610-09af-44bd-8973-f6b396875df0",
+      "name": "From WhatsApp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const m = $json.message;\nif (!m?.text) return null;\nreturn { json: { channel: 'telegram', chat: String(m.chat.id), text: m.text } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "3168a560-b7df-40b0-a9c9-57c158575fd7",
+      "name": "From Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ ['YOUR_OWNER_WHATSAPP', 'YOUR_TELEGRAM_CHAT_ID'].includes(String($json.chat)) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "21cf688d-aa65-4c2d-81db-1485a85ddb41",
+      "name": "Is it the owner?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=You are the AI CEO of YOUR BUSINESS NAME, a small Indian business. You talk only to the owner, on WhatsApp or Telegram. Today is {{ $now.setZone('Asia/Kolkata').toFormat('cccc, d LLL yyyy, h:mm a') }} IST.\n\nYou manage 7 teams, each available as a tool: Sales, Support, Marketing, Finance, HR, Ops, Research. When the owner asks for something, decide which team(s) can do it, call them with a clear request, and combine their answers. For a broad question like 'how is business today?' ask Finance, Sales and Support.\n\nRULES:\n- Never invent numbers, names or facts. Only report what a team returned; if a team fails, say so.\n- Before anything is SENT to customers, staff or vendors (messages, broadcasts, emails, offers), first tell the owner exactly what will go out and ask 'Shall I send it?'. Only call the tool to send after the owner says yes.\n- Never promise discounts, refunds or deadlines on the owner's behalf.\n- Reply like a sharp manager on WhatsApp: short lines, numbers with ₹ and Indian commas, max 10 lines, the owner's language (English / Hinglish / Hindi / Telugu)."
+        }
+      },
+      "id": "e2d88aca-c62b-4f41-9ce6-5819926dbd16",
+      "name": "CEO agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "cd6a18ad-a72f-4660-9723-79c26882739f",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Is it the owner?').item.json.chat }}",
+        "contextWindowLength": 12
+      },
+      "id": "b81cc414-cd47-42e5-9c2a-1ceb94e5a830",
+      "name": "Chat memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        620,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Sales department: find leads, qualify a lead, write a proposal, follow up, check the sales pipeline. Send a clear request in plain words.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SALES_WORKFLOW_ID"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "request": "={{ $fromAI('request', 'What you want this team to do or find out, in plain words', 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "request",
+              "displayName": "request",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "13235718-c967-4150-be33-8b8f8e7a8a52",
+      "name": "Sales team",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        760,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Customer support: check open complaints/tickets, reply to a customer query, check feedback. Send a clear request in plain words.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SUPPORT_WORKFLOW_ID"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "request": "={{ $fromAI('request', 'What you want this team to do or find out, in plain words', 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "request",
+              "displayName": "request",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "798168e6-43dd-46c8-bae7-1ee268851f3a",
+      "name": "Support team",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        900,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Marketing: write posts, captions, product descriptions, festival offers (owner approval needed before any broadcast), review replies.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_MARKETING_WORKFLOW_ID"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "request": "={{ $fromAI('request', 'What you want this team to do or find out, in plain words', 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "request",
+              "displayName": "request",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "5956e8f0-c8cd-4bc0-a91c-f0dfdf4425d3",
+      "name": "Marketing team",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Finance: today's or this month's sales and expenses, unpaid invoices and dues, payment reminders status. Returns numbers from the sheets.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_FINANCE_WORKFLOW_ID"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "request": "={{ $fromAI('request', 'What you want this team to do or find out, in plain words', 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "request",
+              "displayName": "request",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "d5050b0b-a706-48da-a389-7c9405bb097b",
+      "name": "Finance team",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1180,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "description": "HR: staff on leave, new joiners, interview schedule, pending employee documents, payroll status.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_HR_WORKFLOW_ID"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "request": "={{ $fromAI('request', 'What you want this team to do or find out, in plain words', 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "request",
+              "displayName": "request",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "200310f8-1510-4f7b-bc8c-006eaee11da5",
+      "name": "HR team",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Operations: low stock, purchase orders, delivery status of orders, today's staff tasks.",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_OPS_WORKFLOW_ID"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "request": "={{ $fromAI('request', 'What you want this team to do or find out, in plain words', 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "request",
+              "displayName": "request",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "6b716d2f-9826-4617-a44d-60ea0014702e",
+      "name": "Ops team",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1460,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Research: competitor changes, price drops, today's industry news, a brief on a lead's company (give the website).",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_RESEARCH_WORKFLOW_ID"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "request": "={{ $fromAI('request', 'What you want this team to do or find out, in plain words', 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "request",
+              "displayName": "request",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "b8aafd89-7e6e-4570-adaf-8a5c58d816f1",
+      "name": "Research team",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        1600,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Is it the owner?').item.json.channel === 'telegram' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1d415aa1-d15d-44c6-9347-1d4c11b61b8e",
+      "name": "Reply on Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Is it the owner?').item.json.chat }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "241939b5-ba17-49cc-896c-1035e4f56c1e",
+      "name": "Telegram reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1580,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Is it the owner?').item.json.chat }}",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "529ed3f5-0c44-4a99-ae83-fe6b6cbcb379",
+      "name": "WhatsApp reply",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1580,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "016a7dda-a530-4bf6-affd-2066f02787ac",
+      "name": "Every day 8 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "options": {}
+      },
+      "id": "6758a5b6-c4eb-4031-84da-7c6909bba28e",
+      "name": "Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        560
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Sales"
+        },
+        "options": {}
+      },
+      "id": "f23f2f17-ae9e-418c-a76a-45b7854ca02d",
+      "name": "Sales",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        560
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Expenses"
+        },
+        "options": {}
+      },
+      "id": "767091a2-1991-4449-8e2c-8def97d780a1",
+      "name": "Expenses",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        560
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Tickets"
+        },
+        "options": {}
+      },
+      "id": "d6bfe33e-f244-403e-8f47-3a04063f107e",
+      "name": "Tickets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1180,
+        560
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Tasks"
+        },
+        "options": {}
+      },
+      "id": "05f16bdb-0c8f-4b69-ae28-d23bebed0595",
+      "name": "Tasks",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1420,
+        560
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Stock"
+        },
+        "options": {}
+      },
+      "id": "a25f2229-6dfc-485f-8452-b54a8e814f47",
+      "name": "Stock",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1660,
+        560
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const num = v => Number(String(v ?? '').replace(/[^0-9.-]/g, '')) || 0;\nconst y = $now.setZone('Asia/Kolkata').minus({ days: 1 }).toFormat('yyyy-LL-dd'), t = $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd');\nconst rows = n => $(n).all().map(i => i.json);\nconst on = (a, d) => a.filter(r => String(r.Date || r.Created || r.Received || r.Added || '').slice(0, 10) === d);\nconst S = on(rows('Sales'), y), E = on(rows('Expenses'), y);\nreturn [{ json: { date: $now.setZone('Asia/Kolkata').minus({ days: 1 }).toFormat('d LLL'), sales: S.reduce((s, r) => s + num(r.Amount), 0), bills: S.length, spent: E.reduce((s, r) => s + num(r.Amount), 0),\n  new_leads: on(rows('Leads'), y).length, open_tickets: rows('Tickets').filter(r => r.Status && !/closed|resolved|done/i.test(r.Status)).length,\n  tasks_today: on(rows('Tasks'), t).length, low_stock: rows('Stock').filter(r => r.SKU && num(r['In stock']) <= num(r['Reorder level'])).map(r => r.Item).slice(0, 8) } }];"
+      },
+      "id": "56213740-2cff-4c8d-a8b9-589a48b7afbf",
+      "name": "Yesterday's numbers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write the owner's 8 AM WhatsApp report for YOUR BUSINESS NAME from these exact numbers (₹): {{ JSON.stringify($json) }}\nFormat: '☀️ Good morning! Yesterday ({{ $json.date }})' then short lines: sales + bills, spent, net, new leads, open tickets, today's tasks, low-stock items. End with the ONE most important thing to do today. Never invent numbers. Max 9 lines. Output only the message.",
+        "hasOutputParser": false
+      },
+      "id": "02b947d8-a334-4954-bf8c-dbfbe6349653",
+      "name": "AI morning report",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        2140,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "bc2b8562-ac9c-4095-88ae-aa8423f6958a",
+      "name": "Claude (report)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        2080,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "textBody": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "a4ba2be0-6eee-4545-a51c-8466f0bbcb1a",
+      "name": "Report on WhatsApp",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2580,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "=YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "5468f1a4-a2b2-4731-882e-e3d260e0a7a3",
+      "name": "Report on Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2580,
+        660
+      ]
+    }
+  ],
+  "connections": {
+    "Owner on WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "From WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "From WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Is it the owner?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Owner on Telegram": {
+      "main": [
+        [
+          {
+            "node": "From Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "From Telegram": {
+      "main": [
+        [
+          {
+            "node": "Is it the owner?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is it the owner?": {
+      "main": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales team": {
+      "ai_tool": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Support team": {
+      "ai_tool": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marketing team": {
+      "ai_tool": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finance team": {
+      "ai_tool": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR team": {
+      "ai_tool": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ops team": {
+      "ai_tool": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research team": {
+      "ai_tool": [
+        [
+          {
+            "node": "CEO agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CEO agent": {
+      "main": [
+        [
+          {
+            "node": "Reply on Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply on Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Telegram reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every day 8 AM": {
+      "main": [
+        [
+          {
+            "node": "Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leads": {
+      "main": [
+        [
+          {
+            "node": "Sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales": {
+      "main": [
+        [
+          {
+            "node": "Expenses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expenses": {
+      "main": [
+        [
+          {
+            "node": "Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tickets": {
+      "main": [
+        [
+          {
+            "node": "Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tasks": {
+      "main": [
+        [
+          {
+            "node": "Stock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stock": {
+      "main": [
+        [
+          {
+            "node": "Yesterday's numbers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Yesterday's numbers": {
+      "main": [
+        [
+          {
+            "node": "AI morning report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude (report)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI morning report",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI morning report": {
+      "main": [
+        [
+          {
+            "node": "Report on WhatsApp",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Report on Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

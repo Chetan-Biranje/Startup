@@ -1,0 +1,386 @@
+{
+  "name": "44 · Price Tracker (Kaamchor AI · MAP 3.0)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 44 · Price Tracker\nTrack the price of anything online: your supplier's raw material, a competitor's product, a machine you want to buy. Every morning it reads the price, logs it, and WhatsApps you when it **drops** or goes below your target. No AI needed.\n\n**Setup (10 min)**\n1. Google Sheets nodes: add a **Google Sheets OAuth2** credential and paste your sheet link in place of YOUR_GOOGLE_SHEET_URL. Tab **Track**: Product, URL, CSS selector, Last price, Lowest, Alert below. Tab **Price log**: Date, Product, Price.\n2. CSS selector: right-click the price on the page → Inspect → copy its class, e.g. `.price` or `.a-price-whole`.\n3. WhatsApp nodes: add a **WhatsApp Business Cloud API** credential and replace YOUR_PHONE_NUMBER_ID with your Phone Number ID (Meta → WhatsApp → API setup). Replace YOUR_OWNER_WHATSAPP with the owner's WhatsApp number in 91XXXXXXXXXX format.\n\nSome big sites block automated visits; then the log says 'not found'. Follow each site's terms.",
+        "height": 637,
+        "width": 400,
+        "color": 1
+      },
+      "id": "32590e62-52b5-4e57-bc4e-836a37ed8f20",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "a13137f3-1e70-477f-a0ba-f60ccd40912a",
+      "name": "Daily 7 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Track"
+        },
+        "options": {}
+      },
+      "id": "c7dd1fb8-3ab6-413f-b8c3-a35313cc75c0",
+      "name": "Track list",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.URL }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "id": "2724dd34-dae3-43cc-9f51-70f810631546",
+      "name": "Open product page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "data",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "price",
+              "cssSelector": "={{ $('Track list').item.json['CSS selector'] }}"
+            }
+          ]
+        },
+        "options": {
+          "trimValues": true
+        }
+      },
+      "id": "866939d8-f45b-45c5-8bdd-4b63536aa2da",
+      "name": "Read the price",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Track tab: Product, URL, CSS selector (where the price is, e.g. .a-price-whole), Last price, Lowest, Alert below (optional ₹)\nconst t = $('Track list').item.json;\nconst raw = Array.isArray($json.price) ? $json.price[0] : $json.price;\nconst price = Number(String(raw || '').replace(/[^0-9.]/g, '')) || null;\nconst last = Number(t['Last price']) || null, low = Number(t.Lowest) || price, below = Number(t['Alert below']) || 0;\nreturn { json: { Product: t.Product, URL: t.URL, price, last, found: !!price, dropped: !!price && !!last && price < last,\n  hit_target: !!price && below > 0 && price <= below, lowest: price ? Math.min(price, low || price) : low } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "3651d77e-dae6-4af3-a472-1aaf6d96463b",
+      "name": "Parse ₹ + compare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { json: { Date: $now.setZone('Asia/Kolkata').toFormat('yyyy-LL-dd'), Product: $json.Product, Price: $json.price ?? 'not found' } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "880fea9c-d39b-4d1e-b54f-50c52b887bd5",
+      "name": "Log row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Price log"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "70c386ce-cefe-4894-9015-c6ca45f2f92a",
+      "name": "Price log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('Parse ₹ + compare').item.json;\nreturn { json: p.found ? { Product: p.Product, 'Last price': p.price, Lowest: p.lowest } : { Product: p.Product } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "b2a35956-12bc-4eaf-a27a-2818a037be8d",
+      "name": "Track update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Track"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Product"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "3d7925ca-dfa8-4803-bc41-5049655a9664",
+      "name": "Update track list",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1920,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Parse ₹ + compare').item.json.dropped || $('Parse ₹ + compare').item.json.hit_target }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dbf9a79f-def2-484f-99a4-10e80fe19f70",
+      "name": "Price dropped?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "textBody": "=📉 Price drop: *{{ $('Parse ₹ + compare').item.json.Product }}*\n₹{{ $('Parse ₹ + compare').item.json.last }} → ₹{{ $('Parse ₹ + compare').item.json.price }}{{ $('Parse ₹ + compare').item.json.hit_target ? ' (below your target!)' : '' }}\n{{ $('Parse ₹ + compare').item.json.URL }}",
+        "additionalFields": {}
+      },
+      "id": "3c86e9bd-eebc-4967-8557-89fbc16d02d9",
+      "name": "WhatsApp owner",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 7 AM": {
+      "main": [
+        [
+          {
+            "node": "Track list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Track list": {
+      "main": [
+        [
+          {
+            "node": "Open product page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Open product page": {
+      "main": [
+        [
+          {
+            "node": "Read the price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read the price": {
+      "main": [
+        [
+          {
+            "node": "Parse ₹ + compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse ₹ + compare": {
+      "main": [
+        [
+          {
+            "node": "Log row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log row": {
+      "main": [
+        [
+          {
+            "node": "Price log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Price log": {
+      "main": [
+        [
+          {
+            "node": "Track update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Track update": {
+      "main": [
+        [
+          {
+            "node": "Update track list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update track list": {
+      "main": [
+        [
+          {
+            "node": "Price dropped?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Price dropped?": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}
