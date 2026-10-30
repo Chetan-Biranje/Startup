@@ -1,0 +1,256 @@
+{
+  "name": "10 · 1 Video to 5 Posts (Kaamchor AI · MAP 2.0 · Marketing)",
+  "nodes": [
+    {
+      "id": "8f2f2c30-7945-470f-b6a6-7d6603cdb47e",
+      "name": "Setup s1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -220
+      ],
+      "parameters": {
+        "content": "## 10 · 1 video → 5 posts\nPaste a YouTube link in the form → transcript → Claude writes an Insta caption, LinkedIn post, X thread, Shorts hook and newsletter blurb → all in one Notion page.\n\n**Setup (10 min)**\n1. Get transcript: any YouTube transcript API works. Example uses Supadata: add your key as env var `TRANSCRIPT_API_KEY` or swap the URL for your provider.\n2. Claude: add your **Anthropic API key**.\n3. Notion: add your **Notion** credential, create a database with a `Name` title property, share it with the integration, paste its ID.\n4. Activate, open the form URL, paste a link.\n\n---\nPart of **MAP – 12 AI agents** (Kaamchor AI).",
+        "width": 420,
+        "height": 480,
+        "color": 4
+      }
+    },
+    {
+      "id": "95859000-8975-47f0-98a5-d2f359c0167f",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "formTitle": "1 video → 5 posts",
+        "formDescription": "Paste a YouTube link. Posts land in Notion in ~1 minute.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "YouTube link",
+              "placeholder": "https://youtube.com/watch?v=...",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "9091c1d9-3f93-4ba8-b632-45789b643daa",
+      "name": "Get transcript",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "url": "https://api.supadata.ai/v1/youtube/transcript",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json['YouTube link'] }}"
+            },
+            {
+              "name": "text",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.TRANSCRIPT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "67672ab0-5ec7-487a-ad9a-8b5beba7bdf8",
+      "name": "Claude repurposes",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Transcript:\n{{ (typeof $json.content === 'string' ? $json.content : JSON.stringify($json.content || $json)).slice(0, 15000) }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are a content repurposer. From this video transcript write 5 posts in the creator's voice. Use only ideas that are in the transcript; no made-up stats. Return ONLY JSON: {\"title\": \"short video title\", \"instagram\": \"caption with hook + 3-5 hashtags\", \"linkedin\": \"post, short lines, no hashtags spam\", \"x_thread\": \"5 tweets separated by blank lines\", \"shorts_hook\": \"first 3 seconds script\", \"newsletter\": \"120-word blurb\"}"
+        }
+      }
+    },
+    {
+      "id": "1c66e439-46e7-4bad-8bc3-bcb4f7e23485",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        520,
+        220
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7c7f5b4d-203b-4286-83d2-6294931e6f47",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { error: 'no JSON', raw } };"
+      }
+    },
+    {
+      "id": "65dc2b64-5103-4e6d-88c6-e0471e389b9d",
+      "name": "Notion Create Page",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_NOTION_DATABASE_ID"
+        },
+        "title": "={{ $json.title }}",
+        "blockUi": {
+          "blockValues": [
+            {
+              "type": "heading_2",
+              "textContent": "Instagram"
+            },
+            {
+              "type": "paragraph",
+              "textContent": "={{ ($json.instagram || '').slice(0, 1990) }}"
+            },
+            {
+              "type": "heading_2",
+              "textContent": "LinkedIn"
+            },
+            {
+              "type": "paragraph",
+              "textContent": "={{ ($json.linkedin || '').slice(0, 1990) }}"
+            },
+            {
+              "type": "heading_2",
+              "textContent": "X thread"
+            },
+            {
+              "type": "paragraph",
+              "textContent": "={{ ($json.x_thread || '').slice(0, 1990) }}"
+            },
+            {
+              "type": "heading_2",
+              "textContent": "Shorts hook"
+            },
+            {
+              "type": "paragraph",
+              "textContent": "={{ ($json.shorts_hook || '').slice(0, 1990) }}"
+            },
+            {
+              "type": "heading_2",
+              "textContent": "Newsletter"
+            },
+            {
+              "type": "paragraph",
+              "textContent": "={{ ($json.newsletter || '').slice(0, 1990) }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get transcript": {
+      "main": [
+        [
+          {
+            "node": "Claude repurposes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude repurposes": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Notion Create Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Claude repurposes",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

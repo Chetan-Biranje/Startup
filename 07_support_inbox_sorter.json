@@ -1,0 +1,244 @@
+{
+  "name": "07 · Inbox Sorter (Kaamchor AI · MAP 2.0 · Support)",
+  "nodes": [
+    {
+      "id": "3fcbad71-1c8b-43c9-a599-eb40ef8b4302",
+      "name": "Setup s1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -200
+      ],
+      "parameters": {
+        "content": "## 07 · Gmail inbox sorter\nEvery new email → Claude reads it → needs a reply? Draft ready. Otherwise labelled FYI.\n\n**Setup (10 min)**\n1. Gmail nodes: add your **Gmail OAuth2** credential.\n2. In Gmail create a label `AI/FYI`. In **Add Label**, pick it from the list.\n3. Claude: add your **Anthropic API key**.\n4. Edit the system prompt: who you are, how you write.\n5. Activate. Drafts appear in Gmail → Drafts. Nothing is ever sent automatically.\n\n---\nPart of **MAP – 12 AI agents** (Kaamchor AI).",
+        "width": 420,
+        "height": 420,
+        "color": 4
+      }
+    },
+    {
+      "id": "7f81250f-d963-4d53-987a-eb57bb43bbc0",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "in:inbox -category:promotions -category:social"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d56fd4af-c6df-4958-ba1d-4507311daf32",
+      "name": "Claude classify",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=From: {{ $json.from?.text }}\nSubject: {{ $json.subject }}\n\n{{ ($json.text || '').slice(0, 4000) }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You sort the inbox of YOUR NAME (YOUR ROLE). Classify the email and decide if a human reply is needed. Categories: lead, client, invoice, newsletter, other. If a reply is needed, write a short draft in the sender's language and in a friendly, direct tone; never promise dates, prices or meetings you were not told about. Return ONLY JSON: {\"category\": \"...\", \"needs_reply\": true|false, \"draft\": \"...\"}"
+        }
+      }
+    },
+    {
+      "id": "4376337c-09b9-46fc-826b-5b608bb229a8",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        260,
+        220
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "dd1e3f66-bb0b-42c7-9619-b8fb57835d4e",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { error: 'no JSON', raw } };"
+      }
+    },
+    {
+      "id": "9233c05f-355f-4409-a0ca-3c78ba9fd27b",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "baead47f-bd71-47ea-8e33-5764a4340bef",
+                    "leftValue": "={{ $json.needs_reply }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Needs reply"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "FYI"
+        }
+      }
+    },
+    {
+      "id": "91fa5aff-dd5e-40db-adae-3197fca36e9a",
+      "name": "Create Draft",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        -120
+      ],
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re: {{ $('Gmail Trigger').item.json.subject }}",
+        "message": "={{ $json.draft }}",
+        "options": {
+          "threadId": "={{ $('Gmail Trigger').item.json.threadId }}",
+          "sendTo": "={{ $('Gmail Trigger').item.json.from.value[0].address }}"
+        }
+      }
+    },
+    {
+      "id": "9c617b69-accc-4561-885c-cdc05470d69a",
+      "name": "Add Label",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1040,
+        120
+      ],
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "YOUR_FYI_LABEL_ID"
+        ]
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Claude classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude classify": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Claude classify",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Create Draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

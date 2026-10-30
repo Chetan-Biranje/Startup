@@ -1,0 +1,303 @@
+{
+  "name": "17 · Resume Screener (Kaamchor AI · MAP 2.0 · Ops)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 📄 Resume Screener\nA resume PDF lands in Gmail → text extracted → Claude scores it 0-10 against your job description → Shortlist / Reject row in Google Sheets.\n\n**Setup (10 min)**\n1. Connect Gmail, Anthropic (Claude) and Google Sheets credentials.\n2. In **Claude scores resume**, edit the **job description** block.\n3. Make a Google Sheet with headers: Date, Name, Email, Phone, Experience, Skills, Score, Status, Reason, Subject, and pick it in the last node.\n4. Activate. Every resume PDF → score → Sheet.\n\nJudges only skills and experience. A human makes the final call.\n\n---\nPart of **MAP – 12 AI agents** (Kaamchor AI).",
+        "height": 380,
+        "width": 520,
+        "color": 5
+      },
+      "id": "a5c94bce-b250-4f00-a641-00f5320092f1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "has:attachment filename:pdf (resume OR CV OR application OR job)"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "id": "a553abc5-7ea5-4753-bccf-f6b10a603d32",
+      "name": "Gmail – new resume",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "id": "2e8a73a5-6b6b-42c2-8517-cf39e3534791",
+      "name": "Read PDF text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert HR recruiter. Score this candidate's resume against the job description.\n\n=== EDIT THIS: JOB DESCRIPTION ===\nRole: Sales Executive\nMust have: 1+ years B2B / field sales, Excel, CRM (any), good communication (Hindi + English)\nNice to have: lead generation, cold calling, local market knowledge\nLocation: Pune (on-site)\n=== END ===\n\nRESUME TEXT:\n{{ $json.text }}\n\nReturn: candidate name, email, phone, total years of experience (number), top 5 relevant skills, a score from 0 to 10 for fit with the job, a one-line reason, and status = \"Shortlist\" if score >= 7 else \"Reject\". Be strict and fair; judge only on skills and experience.",
+        "hasOutputParser": true
+      },
+      "id": "03b0076c-ea28-4ef4-b4a5-3fb3a68aff9b",
+      "name": "Claude scores resume",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        740,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "bdfcf6c3-d353-4c17-97a8-d39a0695d4ff",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        700,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"name\": \"Rohan Verma\",\n  \"email\": \"candidate@example.com\",\n  \"phone\": \"+1 555 0100\",\n  \"experience_years\": 3,\n  \"skills\": [\n    \"B2B Sales\",\n    \"Excel\",\n    \"CRM\",\n    \"Cold calling\",\n    \"Lead generation\"\n  ],\n  \"score\": 8.5,\n  \"reason\": \"3 yrs field B2B sales, CRM + Excel\",\n  \"status\": \"Shortlist\"\n}"
+      },
+      "id": "105337d1-3789-4d91-8f80-8f8dbbb43392",
+      "name": "Structured output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('dd LLL yyyy, HH:mm') }}",
+            "Name": "={{ $json.output.name }}",
+            "Email": "={{ $json.output.email }}",
+            "Phone": "={{ $json.output.phone }}",
+            "Experience": "={{ $json.output.experience_years }}",
+            "Skills": "={{ $json.output.skills.join(', ') }}",
+            "Score": "={{ $json.output.score }}",
+            "Status": "={{ $json.output.status }}",
+            "Reason": "={{ $json.output.reason }}",
+            "Subject": "={{ $('Gmail – new resume').item.json.subject }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Experience",
+              "displayName": "Experience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "063050fc-d31d-4cf2-84cf-849665ff3cba",
+      "name": "Save to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1100,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Gmail – new resume": {
+      "main": [
+        [
+          {
+            "node": "Read PDF text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PDF text": {
+      "main": [
+        [
+          {
+            "node": "Claude scores resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude scores resume": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Claude scores resume",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Claude scores resume",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

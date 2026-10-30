@@ -1,0 +1,4748 @@
+{
+  "name": "MAP 00 – AI Business: 12 agents connected (Kaamchor AI)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# ▶ START HERE\n**12 AI agents, 1 business, 1 Google Sheet.**\n\n**Hinglish:**\n1. Ek Google Sheet banao, tabs: `Leads`, `Bookings`, `Content`, `Reviews`, `Bills`, `Candidates`, `Invoices`, `Daily Log` (pehli row = headers).\n2. `Ctrl+F` se `YOUR_` dhoondo, apni Sheet ID / WhatsApp number ID / number daalo.\n3. Credentials add karo: **Anthropic (Claude)** + **Google** (Sheets, Gmail, Calendar).\n4. Sab triggers OFF (disabled) hain. Ek department ka trigger ON karo (right-click → Activate), test karo, phir agla.\n5. Shuru karo **Ops** ya **10 Bill Reader** se: sirf Gmail + Sheets + Claude chahiye.\n\n**English:** make the sheet with those tabs, replace every `YOUR_...`, add Claude + Google credentials, then enable ONE department's trigger at a time and test it before the next. WhatsApp agents also need a WhatsApp Business Cloud number.\n\n**Setup mein help chahiye? Free call book karo:** https://calendar.google.com/calendar/appointments/schedules/AcZssZ2ZI6Dqh2h1_ZDYvYyeQvzmzxSRp9yCcr0mHPj0WDpbplw-pbnv-e_5B6NI8tjpjhDK8GYfs2ol\n\nPart of **MAP – 12 AI agents** (Kaamchor AI).",
+        "height": 900,
+        "width": 1500,
+        "color": 1
+      },
+      "id": "d81a0e8f-16a4-4f58-b453-83f1b9f7b6b9",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1700,
+        -760
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 👑 OWNER / MANAGER\nEvery night 9 PM: reads every tab of your sheet → Claude writes your report → WhatsApp to you + Daily Log tab.",
+        "height": 560,
+        "width": 2860,
+        "color": 1
+      },
+      "id": "e35c631b-b61d-480e-b738-f035e0c6ff51",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2820,
+        -760
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# ⚙️ OPS\n**10 Bill Reader** → Bills tab (Manager totals them)\n**11 Resume Screener** → Candidates tab\n**12 Invoice Chaser** reads Invoices tab, 8 PM",
+        "height": 2200,
+        "width": 1820,
+        "color": 6
+      },
+      "id": "9a0313aa-ea60-4a7c-ac7b-eb48143c1e55",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        6680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 📣 MARKETING\n**07 SEO Team** → WordPress draft + Content tab\n**08 Video→Posts** → Content tab\n**09 Reviews** → Reviews tab, angry ones → you",
+        "height": 2900,
+        "width": 2340,
+        "color": 4
+      },
+      "id": "a91ba56b-4225-406f-931e-6c392da7a6e0",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 🎧 SUPPORT\n**04 Receptionist** ← gets booking chats from the shared WhatsApp router · logs Bookings\n**05 Missed Call** → hands the caller to 03 Qualifier\n**06 Inbox Sorter** drafts replies, nothing auto-sent",
+        "height": 2760,
+        "width": 1900,
+        "color": 5
+      },
+      "id": "8e1c3f82-5cff-4711-bc87-cdc2f25e6c34",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# 💼 SALES\n**01 Lead Finder** → Leads tab\n**02 WA Replier** → hands every new chat to 03 Qualifier\n**03 Qualifier** 🔥 hot → WhatsApp alert to you + booking offer → 04 Receptionist",
+        "height": 2320,
+        "width": 2080,
+        "color": 3
+      },
+      "id": "d0681c1d-80e3-4da2-be4d-f541e6792531",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 01 Lead Finder\n→ Leads tab  ·  needs: Places API key · Claude · Sheets",
+        "height": 560,
+        "width": 1960,
+        "color": 7
+      },
+      "id": "1ceafc57-1bd1-4460-9234-e219658e13e8",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        60,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 02 WA Replier\n→ hands every new chat to 03 Qualifier  ·  needs: WhatsApp Cloud · Claude",
+        "height": 560,
+        "width": 1960,
+        "color": 7
+      },
+      "id": "bdf43180-b239-43b7-bcaa-708457bc213e",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        60,
+        920
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 03 Qualifier\n🔥 hot → WhatsApp alert to you + booking offer → 04 Receptionist  ·  needs: Claude · Sheets · WhatsApp",
+        "height": 680,
+        "width": 1960,
+        "color": 7
+      },
+      "id": "8a6345fa-d5ca-43a6-a62d-5389b6d3240d",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        60,
+        1540
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 04 Receptionist\n← gets booking chats from the shared WhatsApp router · logs Bookings  ·  needs: WhatsApp Cloud · Claude · Google Calendar · Sheets",
+        "height": 1000,
+        "width": 1780,
+        "color": 7
+      },
+      "id": "f8111232-ff7a-4204-99a0-bfa58b8139b8",
+      "name": "Sticky Note9",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2260,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 05 Missed Call\n→ hands the caller to 03 Qualifier  ·  needs: call webhook · Claude · WhatsApp",
+        "height": 560,
+        "width": 1780,
+        "color": 7
+      },
+      "id": "7619160f-6740-42cb-a4e2-1a0ee55219a9",
+      "name": "Sticky Note10",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2260,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 06 Inbox Sorter\ndrafts replies, nothing auto-sent  ·  needs: Gmail · Claude",
+        "height": 680,
+        "width": 1780,
+        "color": 7
+      },
+      "id": "f5763170-ae05-4140-b386-fa266439909c",
+      "name": "Sticky Note11",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2260,
+        1980
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 07 SEO Team\n→ WordPress draft + Content tab  ·  needs: Places + WordPress · Claude",
+        "height": 1140,
+        "width": 2220,
+        "color": 7
+      },
+      "id": "9b1d3595-f628-4671-bf05-7524d95eb409",
+      "name": "Sticky Note12",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 08 Video→Posts\n→ Content tab  ·  needs: transcript API key · Claude · Sheets",
+        "height": 560,
+        "width": 2220,
+        "color": 7
+      },
+      "id": "20efb0ea-e34e-44f1-ae9b-65f5f9341e4b",
+      "name": "Sticky Note13",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4280,
+        1500
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 09 Reviews\n→ Reviews tab, angry ones → you  ·  needs: Google Business Profile · Gmail · Claude · Sheets",
+        "height": 680,
+        "width": 2220,
+        "color": 7
+      },
+      "id": "006fd64b-3cc8-4990-b530-7fb0ec770764",
+      "name": "Sticky Note14",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4280,
+        2120
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 10 Bill Reader\n→ Bills tab (Manager totals them)  ·  needs: Gmail · Claude · Sheets",
+        "height": 560,
+        "width": 1700,
+        "color": 7
+      },
+      "id": "0d41cd10-2467-47d7-9598-0ed0c0bb3896",
+      "name": "Sticky Note15",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        6740,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 11 Resume Screener\n→ Candidates tab  ·  needs: Gmail · Claude · Sheets",
+        "height": 560,
+        "width": 1700,
+        "color": 7
+      },
+      "id": "bd68318b-8c2d-4a42-a59e-eac6dc445504",
+      "name": "Sticky Note16",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        6740,
+        920
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### 12 Invoice Chaser\nreads Invoices tab, 8 PM  ·  needs: Sheets · Gmail · Claude",
+        "height": 560,
+        "width": 1700,
+        "color": 7
+      },
+      "id": "4adcc4c1-ec82-4d97-b262-ecdf3a1cc06f",
+      "name": "Sticky Note17",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        6740,
+        1540
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 21
+            }
+          ]
+        }
+      },
+      "id": "b99184d7-ad9c-4b2c-b379-c474f66cebc9",
+      "name": "Manager · Every night 9 PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2940,
+        -560
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "options": {}
+      },
+      "id": "c490af88-5d70-4871-ae1a-269fa7487b03",
+      "name": "Manager · Read Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3160,
+        -560
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Bookings"
+        },
+        "options": {}
+      },
+      "id": "a1044cb3-bd16-4c22-abf9-2b07adb913f2",
+      "name": "Manager · Read Bookings",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3380,
+        -560
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Content"
+        },
+        "options": {}
+      },
+      "id": "952be903-5d4f-477a-9689-7eb55d8406b5",
+      "name": "Manager · Read Content",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3600,
+        -560
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Reviews"
+        },
+        "options": {}
+      },
+      "id": "2880f53f-db76-4cc3-81f5-91be134536c5",
+      "name": "Manager · Read Reviews",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3820,
+        -560
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Bills"
+        },
+        "options": {}
+      },
+      "id": "8de7de82-43cd-4404-ad5b-1bff27d351cd",
+      "name": "Manager · Read Bills",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4040,
+        -560
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Invoices"
+        },
+        "options": {}
+      },
+      "id": "dff50e83-14e6-4220-9c47-6700796e4a7c",
+      "name": "Manager · Read Invoices",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4260,
+        -560
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Candidates"
+        },
+        "options": {}
+      },
+      "id": "22b0eb67-61db-4f5f-99d3-5e0c066f12bd",
+      "name": "Manager · Read Candidates",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4480,
+        -560
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Count what every department did today, straight from the shared sheet.\nconst today = $now.toISODate();\nconst rows = (n) => { try { return $(n).all().map((i) => i.json).filter((r) => Object.keys(r).length); } catch (e) { return []; } };\nconst isToday = (r) => String(r.Date || '').startsWith(today);\nconst num = (v) => Number(String(v ?? '').replace(/[^0-9.\\-]/g, '')) || 0;\nconst leads = rows('Manager · Read Leads').filter(isToday);\nconst inbound = leads.filter((r) => r.Status !== 'prospect');\nconst reviews = rows('Manager · Read Reviews').filter(isToday);\nconst bills = rows('Manager · Read Bills').filter(isToday);\nconst overdue = rows('Manager · Read Invoices').filter((r) => String(r.Status).toLowerCase() !== 'paid' && r['Due date'] && String(r['Due date']) < today);\nconst cands = rows('Manager · Read Candidates').filter(isToday);\nreturn [{ json: {\n  date: today,\n  sales: { new_leads: inbound.length, hot: inbound.filter((r) => String(r.Status).toLowerCase() === 'hot').map((r) => `${r.Name || r.Phone} (${r.Source})`),\n           prospects_found: leads.length - inbound.length },\n  support: { bookings: rows('Manager · Read Bookings').filter(isToday).map((r) => `${r.Name} ${r.Start}`) },\n  marketing: { content_made: rows('Manager · Read Content').filter(isToday).map((r) => `${r.Type}: ${r.Title}`),\n               reviews: reviews.length, angry_reviews: reviews.filter((r) => r.Sentiment === 'angry').map((r) => `${r.Reviewer} ${r.Stars}★`) },\n  ops: { bills_today: bills.length, bills_total: bills.reduce((s, r) => s + num(r.amount), 0),\n         overdue_invoices: overdue.length, overdue_total: overdue.reduce((s, r) => s + num(r.Amount), 0),\n         shortlisted: cands.filter((r) => r.Status === 'Shortlist').map((r) => `${r.Name} (${r.Score}/10)`) },\n} }];"
+      },
+      "id": "ebf21a16-49f6-4840-aacd-b5e622b18fc8",
+      "name": "Manager · Today's numbers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4700,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "hasOutputParser": false,
+        "text": "=You are the manager of a small business run by 12 AI agents. Write tonight's WhatsApp report for the owner.\nLanguage: simple Hinglish. Max 12 short lines. One line per department with an emoji (💼 Sales, 🎧 Support, 📣 Marketing, ⚙️ Ops), then '👉 Kal ke 3 kaam:' with the 3 most important actions (hot leads to call first, angry reviews, overdue money). Use only the numbers below; if something is 0 say so in a few words. No greeting paragraph.\n\nToday's numbers:\n{{ JSON.stringify($json, null, 2) }}"
+      },
+      "id": "e5153820-9f1a-4531-8940-c40acffe270e",
+      "name": "Manager · Claude writes owner report",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        4920,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "74890ac7-9fe3-44b3-8a6d-e2e271e76f49",
+      "name": "Manager · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        4920,
+        -340
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "YOUR_WHATSAPP_NUMBER",
+        "textBody": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "e1a61e0d-b1d0-42fb-8484-d672e21ee928",
+      "name": "Manager · WhatsApp owner",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        5140,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Daily Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Report",
+              "displayName": "Report",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "value": {
+            "Date": "={{ $now.toISODate() }}",
+            "Report": "={{ $('Manager · Claude writes owner report').item.json.text }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "350ed479-e00a-422b-9905-4d66649d82a3",
+      "name": "Manager · Save to Daily Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5360,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "5189d46f-9c83-43a0-90a1-d2e226e14327",
+      "name": "Lead Finder · Every morning 8 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        410
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6a8c87ea-2109-4f57-9de6-d123d00201ba",
+              "name": "search",
+              "value": "dentist in Austin TX",
+              "type": "string"
+            },
+            {
+              "id": "bc697be3-1f8d-4190-b9c2-c474b51fef15",
+              "name": "max_results",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "d98b7c00-c596-4362-a152-8f890178e5bd",
+              "name": "my_offer",
+              "value": "We build AI receptionists that answer every call and WhatsApp and book appointments 24/7.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4877a8b9-833b-4f29-aa2c-036cde242150",
+      "name": "Lead Finder · Your search",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://places.googleapis.com/v1/places:searchText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Goog-Api-Key",
+              "value": ""
+            },
+            {
+              "name": "X-Goog-FieldMask",
+              "value": "places.displayName,places.websiteUri,places.rating,places.userRatingCount,places.formattedAddress,places.googleMapsUri"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ textQuery: $json.search, pageSize: $json.max_results }) }}",
+        "options": {}
+      },
+      "id": "db197839-714c-4b14-8782-41061c5a8b54",
+      "name": "Lead Finder · Google Maps search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return ($input.first().json.places || [])\n  .filter(p => p.websiteUri)\n  .map(p => ({ json: { business: p.displayName?.text, website: p.websiteUri, rating: p.rating, reviews: p.userRatingCount, address: p.formattedAddress, maps: p.googleMapsUri } }));"
+      },
+      "id": "dd077462-5aaa-4394-8334-1208d0696cb6",
+      "name": "Lead Finder · One row per business",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.website }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "c8172f82-f3e1-4030-af3a-8ca512a41de0",
+      "name": "Lead Finder · Check website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item, i) => {\n  const biz = $('Lead Finder · One row per business').all()[i].json;\n  const html = String(item.json.data || '');\n  const title = (html.match(/<title[^>]*>([^<]*)/i) || [])[1] || '';\n  const text = html.replace(/<script[\\s\\S]*?<\\/script>|<style[\\s\\S]*?<\\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 2500);\n  const signals = { online_booking: /book (online|now)|appointment/i.test(html), chat_widget: /intercom|tawk|crisp|livechat|whatsapp/i.test(html) };\n  return { json: { ...biz, title, text, signals } };\n});"
+      },
+      "id": "a545ead8-da54-4b43-98a3-02afed956e23",
+      "name": "Lead Finder · Website notes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You write the first line of a cold email. It must prove we really looked at this business.\n\nWHAT WE SELL: {{ $('Lead Finder · Your search').first().json.my_offer }}\n\nBUSINESS: {{ $json.business }} ({{ $json.rating }}★ from {{ $json.reviews }} Google reviews, {{ $json.address }})\nWEBSITE TITLE: {{ $json.title }}\nSIGNALS: {{ JSON.stringify($json.signals) }}\nWEBSITE TEXT:\n{{ $json.text }}\n\nReturn: one specific observation from their site or reviews, a first line (max 25 words, friendly, no flattery, no 'I hope this finds you well'), and a fit score 1-10 for how much they need what we sell.",
+        "hasOutputParser": true
+      },
+      "id": "bb711e40-9f5d-4cfe-9f14-65ea060bc916",
+      "name": "Lead Finder · Claude writes first line",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1480,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "1e098cb9-23db-4863-b62d-df22de97f98f",
+      "name": "Lead Finder · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1440,
+        630
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"observation\": \"Booking is by phone only and the site says 'call during office hours'\",\n  \"first_line\": \"Saw your 4.8 stars on Google, but new patients can only book by phone during office hours.\",\n  \"fit_score\": 8\n}"
+      },
+      "id": "bacad439-47c7-4a23-bc63-6a98339bafd1",
+      "name": "Lead Finder · Structured output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        630
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Maps link",
+              "displayName": "Maps link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "First line",
+              "displayName": "First line",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "value": {
+            "Date": "={{ $now.toISODate() }}",
+            "Source": "Lead Finder (outbound)",
+            "Name": "={{ $('Lead Finder · Website notes').item.json.business }}",
+            "Website": "={{ $('Lead Finder · Website notes').item.json.website }}",
+            "Rating": "={{ $('Lead Finder · Website notes').item.json.rating }}",
+            "Address": "={{ $('Lead Finder · Website notes').item.json.address }}",
+            "Maps link": "={{ $('Lead Finder · Website notes').item.json.maps }}",
+            "Message": "={{ $json.output.observation }}",
+            "Status": "prospect",
+            "Reason": "=Fit score {{ $json.output.fit_score }}/10",
+            "First line": "={{ $json.output.first_line }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "7566052e-25f7-4c28-a041-967620bc1513",
+      "name": "Lead Finder · Save to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1720,
+        410
+      ]
+    },
+    {
+      "id": "b680f3b1-9592-40bb-94c3-49a22057d713",
+      "name": "WA Replier · Claude replies",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        680,
+        1030
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer {{ $json.contacts?.[0]?.profile?.name || 'unknown' }} ({{ $json.messages?.[0]?.from }}) wrote: {{ $json.messages?.[0]?.text?.body }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the WhatsApp assistant of YOUR BUSINESS NAME. Reply in the customer's language (Hinglish is fine), max 3 short lines, warm and helpful. Answer the question if you can, then ask ONE qualifying question (what they need / budget / area). Never invent prices you were not given. Return ONLY JSON: {\"reply\": \"...\", \"name\": \"...\", \"phone\": \"...\", \"need\": \"...\", \"budget\": \"...\"}"
+        }
+      }
+    },
+    {
+      "id": "159c4592-a167-4b23-acd5-f0fb8fa3c8bc",
+      "name": "WA Replier · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        680,
+        1250
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "49db4656-9e74-43f3-983e-e48bb2f4aa1d",
+      "name": "WA Replier · Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        1030
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { error: 'no JSON', raw } };"
+      }
+    },
+    {
+      "id": "467e6d6f-9798-4f9e-aee7-db2e11212f1e",
+      "name": "WA Replier · WhatsApp Send",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        1030
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Customer WhatsApp (in)').item.json.messages[0].from }}",
+        "textBody": "={{ $json.reply }}",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "1ef7336d-1f9e-45c3-82c4-764ced9b858c",
+      "name": "WA Replier · Hand to Qualifier",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1460,
+        1030
+      ],
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({ body: { name: $('WA Replier · Parse JSON').item.json.name || $('Customer WhatsApp (in)').item.json.contacts?.[0]?.profile?.name || '', phone: $('Customer WhatsApp (in)').item.json.messages[0].from, email: '', source: 'WhatsApp', message: ($('Customer WhatsApp (in)').item.json.messages[0].text?.body || '') + ' | need: ' + ($('WA Replier · Parse JSON').item.json.need || '') + ' | budget: ' + ($('WA Replier · Parse JSON').item.json.budget || '') } }) }}",
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "a266c754-45a6-4e74-b9d6-637ae8df2ca9",
+      "name": "Customer WhatsApp (in)",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        160,
+        1030
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7d0db2a0-ebd1-4b82-bb65-d4f87ca8c369",
+              "leftValue": "={{ /(book|booking|appointment|slot|schedule|visit|kal|aaj|parso|tomorrow|today|baje|\\b\\d{1,2}\\s?(am|pm)\\b)/i.test($json.messages?.[0]?.text?.body || '') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "930680f2-dc6d-4e59-8589-99504bd56fa7",
+      "name": "Booking or new question?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        420,
+        1030
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-lead",
+        "options": {}
+      },
+      "id": "da44c861-5110-49ee-abd3-2a6ca2474caa",
+      "name": "Qualifier · Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        160,
+        1770
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: 'claude-sonnet-5-5',\n  max_tokens: 300,\n  system: 'You qualify inbound sales leads. hot = clear buying intent (asks for price, call, demo, or gives budget/timeline). warm = interested but vague, no urgency. cold = spam, irrelevant, job seekers, or no intent. Always answer by calling the qualify_lead tool.',\n  tools: [\n    {\n      name: 'qualify_lead',\n      description: 'Record the qualification of a lead.',\n      input_schema: {\n        type: 'object',\n        properties: {\n          status: { type: 'string', enum: ['hot', 'warm', 'cold'] },\n          reason: { type: 'string', description: 'One short sentence explaining the status.' }\n        },\n        required: ['status', 'reason']\n      }\n    }\n  ],\n  tool_choice: { type: 'tool', name: 'qualify_lead' },\n  messages: [\n    { role: 'user', content: 'Lead data:\\n' + JSON.stringify($json.body) }\n  ]\n}) }}",
+        "options": {}
+      },
+      "id": "754347da-ffa5-4f55-abf4-3bb0e2e69b31",
+      "name": "Qualifier · Claude Qualify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        1770
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Leads arrive from the form/ads webhook, the WhatsApp Replier and the Missed-Call Rescuer.\nconst leads = $('Qualifier · Lead in').all();\nreturn $input.all().map((item, i) => {\n  let lead;\n  try { lead = $('Qualifier · Lead in').itemMatching(i).json.body; } catch (e) { lead = leads[i]?.json.body; }\n  lead = lead ?? {};\n  const tool = (item.json.content ?? []).find((c) => c.type === 'tool_use');\n  const q = tool?.input ?? {};\n  const ok = ['hot', 'warm', 'cold'].includes(q.status);\n  return {\n    json: {\n      Date: $now.toISODate(),\n      Source: lead.source ?? 'Form / Ads',\n      Name: lead.name ?? '',\n      Phone: lead.phone ?? '',\n      Email: lead.email ?? '',\n      Message: lead.message ?? '',\n      Status: ok ? q.status : 'warm',\n      Reason: ok ? q.reason ?? '' : 'AI qualification failed - review manually',\n    },\n  };\n});"
+      },
+      "id": "d16aefe9-de37-4ef6-94b1-dc98e4d20553",
+      "name": "Qualifier · Build Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        1770
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "f3fd478b-02e8-4897-9e9e-381e18de045c",
+      "name": "Qualifier · Save to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1060,
+        1650
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c0000001-0000-4000-8000-000000000001",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "hot",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "af874c42-859a-4208-8eb0-abf54c853129",
+      "name": "Qualifier · Is Hot?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1060,
+        1870
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "YOUR_WHATSAPP_NUMBER",
+        "messageType": "text",
+        "textBody": "=🔥 HOT lead!\nName: {{ $json.Name }}\nPhone: {{ $json.Phone }}\nEmail: {{ $json.Email }}\nSource: {{ $json.Source }}\nMessage: {{ $json.Message }}\nWhy: {{ $json.Reason }}",
+        "additionalFields": {}
+      },
+      "id": "faf5ff61-6ef7-42cb-b864-ff0ff9ff0453",
+      "name": "Qualifier · WhatsApp Owner Alert",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        1770
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "3296751b-da2a-4ab6-9176-dfcb9098ea13",
+      "name": "Qualifier · Lead in",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        380,
+        1770
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2545aa73-5be0-4980-8b9d-1ea874f012f2",
+              "leftValue": "={{ $json.Phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "70a8e849-5b02-46be-aec8-8457deda5727",
+      "name": "Qualifier · Has WhatsApp number?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1300,
+        1990
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $json.Phone }}",
+        "textBody": "=Hi {{ $json.Name || '' }} 🙌 Aapki enquiry mil gayi. Ek quick call ya visit book kar dein? Bas apna convenient din aur time reply kijiye, slot main confirm kar dunga.",
+        "additionalFields": {}
+      },
+      "id": "5dfdf87a-12bb-41de-832a-60f157ea31df",
+      "name": "Receptionist · Booking offer",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        1990
+      ]
+    },
+    {
+      "id": "38796b94-4c87-4f1d-a64c-7754637bb6b9",
+      "name": "Receptionist · AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        2440,
+        850
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Now: {{ $now.toISO() }}\nCustomer {{ $json.contacts?.[0]?.profile?.name || 'unknown' }} ({{ $json.messages?.[0]?.from }}) wrote: {{ $json.messages?.[0]?.text?.body }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the WhatsApp receptionist of YOUR BUSINESS (hours 10:00-19:00, 30-min slots, closed Sunday). Reply in the customer's language (Hinglish is fine). Use the calendar tool to check which slots are busy before proposing one. Only book when the customer has agreed to a specific time. Return ONLY JSON: {\"book\": true|false, \"name\": \"...\", \"reason\": \"...\", \"start\": \"ISO datetime or null\", \"end\": \"ISO datetime or null\", \"reply\": \"message to send\"}"
+        }
+      }
+    },
+    {
+      "id": "c337021d-5a27-4be1-b528-349cd7ee8c13",
+      "name": "Receptionist · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        2360,
+        1070
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ad7f1df4-dbcf-4c0f-a73d-2cdd710fc137",
+      "name": "Receptionist · Calendar tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        2520,
+        1070
+      ],
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $fromAI('timeMin', 'start of range, ISO') }}",
+        "timeMax": "={{ $fromAI('timeMax', 'end of range, ISO') }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "65b3497f-d20f-44c4-9b67-bfee7a8f1bad",
+      "name": "Receptionist · Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        850
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { error: 'no JSON', raw } };"
+      }
+    },
+    {
+      "id": "4b3c11cb-75c0-414c-9b65-b74bb5d7acfe",
+      "name": "Receptionist · Book?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2960,
+        850
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5a5d27ce-f7c7-4460-ad6f-886c68d7aa39",
+              "leftValue": "={{ $json.book }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a61dd967-99a3-46d6-87ce-3e44d0e60307",
+      "name": "Receptionist · Book slot",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        3220,
+        730
+      ],
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary"
+        },
+        "start": "={{ $json.start }}",
+        "end": "={{ $json.end }}",
+        "additionalFields": {
+          "summary": "={{ $json.name }} - {{ $json.reason }} ({{ $('Customer WhatsApp (in)').item.json.messages[0].from }})"
+        }
+      }
+    },
+    {
+      "id": "a73b616e-db6c-42a7-846f-6ceed1ae26d4",
+      "name": "Receptionist · WhatsApp Send",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        3480,
+        850
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Customer WhatsApp (in)').item.json.messages[0].from }}",
+        "textBody": "={{ $('Receptionist · Parse JSON').item.json.reply }}",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "fe5df7a5-079e-484f-bc32-b02bc9a5b68c",
+      "name": "Receptionist · Schedule reminder",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3480,
+        610
+      ],
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ DateTime.fromISO($('Receptionist · Parse JSON').item.json.start).minus({ days: 1 }).toISO() }}"
+      }
+    },
+    {
+      "id": "31fbbb97-7258-4d05-a167-d4fd15dbee57",
+      "name": "Receptionist · WhatsApp Send (reminder)",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        3740,
+        610
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Customer WhatsApp (in)').item.json.messages[0].from }}",
+        "textBody": "=Reminder: your appointment is tomorrow, {{ DateTime.fromISO($('Receptionist · Parse JSON').item.json.start).toFormat('dd LLL, h:mm a') }} . Reply here if you need to reschedule.",
+        "additionalFields": {}
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Bookings"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Start",
+              "displayName": "Start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "End",
+              "displayName": "End",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "value": {
+            "Date": "={{ $now.toISODate() }}",
+            "Name": "={{ $('Receptionist · Parse JSON').item.json.name }}",
+            "Phone": "={{ $('Customer WhatsApp (in)').item.json.messages[0].from }}",
+            "Start": "={{ $('Receptionist · Parse JSON').item.json.start }}",
+            "End": "={{ $('Receptionist · Parse JSON').item.json.end }}",
+            "Reason": "={{ $('Receptionist · Parse JSON').item.json.reason }}",
+            "Status": "booked"
+          }
+        },
+        "options": {}
+      },
+      "id": "8191adf4-0133-46b8-90e4-23cf6ffab258",
+      "name": "Receptionist · Log booking",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3480,
+        410
+      ]
+    },
+    {
+      "id": "3c0c7919-b068-4fce-b91a-7f8031bd227a",
+      "name": "Missed Call · Missed call",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        2360,
+        1470
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "missed-call",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "disabled": true
+    },
+    {
+      "id": "8dd5005b-e0d8-4f5a-98a8-1d23190e9093",
+      "name": "Missed Call · Claude writes WhatsApp",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        2620,
+        1470
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Missed call from {{ $json.body.from }} at {{ $json.body.time }}. Known customer name: {{ $json.body.name || 'unknown' }}.",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the assistant of YOUR BUSINESS NAME. The owner missed a call because he is on a job. Write a short, warm WhatsApp message in the customer's language (English or Hinglish). Start with \"Hello ji\", never \"Namaste\": say sorry for missing the call, ask what they need and their area, promise a callback. Return JSON: reply, lead_name, phone."
+        }
+      }
+    },
+    {
+      "id": "9e8dbb1a-0dcc-4ec2-b6b0-35057c8a755f",
+      "name": "Missed Call · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        2620,
+        1690
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "3d032182-4677-45cf-ae08-38340b7bc6a8",
+      "name": "Missed Call · WhatsApp text-back",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        1470
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Missed Call · Missed call').item.json.body.from }}",
+        "textBody": "={{ (() => { const r = $json.output || ''; const m = r.match(/\\{[\\s\\S]*\\}/); try { return m ? JSON.parse(m[0]).reply : r; } catch (e) { return r; } })() }}",
+        "additionalFields": {}
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({ body: { name: $('Missed Call · Missed call').item.json.body.name || '', phone: $('Missed Call · Missed call').item.json.body.from, email: '', source: 'Missed call', message: 'Missed call (auto text-back sent on WhatsApp)' } }) }}",
+        "options": {}
+      },
+      "id": "5d7e90a7-acf6-430b-827a-66070cd099cf",
+      "name": "Missed Call · Hand to Qualifier",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3140,
+        1470
+      ]
+    },
+    {
+      "id": "aa481c2a-75be-41b5-b7b1-a0dd2862fa91",
+      "name": "Inbox Sorter · Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2360,
+        2210
+      ],
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "in:inbox -category:promotions -category:social"
+        },
+        "options": {}
+      },
+      "disabled": true
+    },
+    {
+      "id": "ed18abfd-9e33-42ad-a04c-31671fab189a",
+      "name": "Inbox Sorter · Claude classify",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        2620,
+        2210
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=From: {{ $json.from?.text }}\nSubject: {{ $json.subject }}\n\n{{ ($json.text || '').slice(0, 4000) }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You sort the inbox of YOUR NAME (YOUR ROLE). Classify the email and decide if a human reply is needed. Categories: lead, client, invoice, newsletter, other. If a reply is needed, write a short draft in the sender's language and in a friendly, direct tone; never promise dates, prices or meetings you were not told about. Return ONLY JSON: {\"category\": \"...\", \"needs_reply\": true|false, \"draft\": \"...\"}"
+        }
+      }
+    },
+    {
+      "id": "5a646476-6f2f-41e4-9983-e7c75bfe7b6d",
+      "name": "Inbox Sorter · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        2620,
+        2430
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2fedf29c-3644-4422-be73-974c09162641",
+      "name": "Inbox Sorter · Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        2210
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { error: 'no JSON', raw } };"
+      }
+    },
+    {
+      "id": "c9b1cd14-3fdb-4441-a3fd-fb3354e69c8e",
+      "name": "Inbox Sorter · Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3140,
+        2210
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "baead47f-bd71-47ea-8e33-5764a4340bef",
+                    "leftValue": "={{ $json.needs_reply }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Needs reply"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "FYI"
+        }
+      }
+    },
+    {
+      "id": "b8bc6b5f-df79-4c89-a471-651260361ad1",
+      "name": "Inbox Sorter · Create Draft",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3400,
+        2090
+      ],
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re: {{ $('Inbox Sorter · Gmail Trigger').item.json.subject }}",
+        "message": "={{ $json.draft }}",
+        "options": {
+          "threadId": "={{ $('Inbox Sorter · Gmail Trigger').item.json.threadId }}",
+          "sendTo": "={{ $('Inbox Sorter · Gmail Trigger').item.json.from.value[0].address }}"
+        }
+      }
+    },
+    {
+      "id": "05bedce7-acc9-4acd-a802-40a3c41dcce8",
+      "name": "Inbox Sorter · Add Label",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3400,
+        2330
+      ],
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $('Inbox Sorter · Gmail Trigger').item.json.id }}",
+        "labelIds": [
+          "YOUR_FYI_LABEL_ID"
+        ]
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "id": "2a1c90b1-4b99-44bf-97b1-b8c2ea2d186e",
+      "name": "SEO Team · Every night 2 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        4380,
+        410
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9ef56265-be39-435b-8db7-df0352195b2c",
+              "name": "business_name",
+              "value": "Your Business",
+              "type": "string"
+            },
+            {
+              "id": "66bc156e-002b-453e-8f5b-8e5734899746",
+              "name": "service",
+              "value": "plumber",
+              "type": "string"
+            },
+            {
+              "id": "493916b3-adfa-4536-bab5-22dc9bae1df5",
+              "name": "city",
+              "value": "Austin, TX",
+              "type": "string"
+            },
+            {
+              "id": "f3548770-4050-45bc-93b5-0c5b0829b37a",
+              "name": "towns",
+              "value": "Austin, Round Rock, Kyle",
+              "type": "string"
+            },
+            {
+              "id": "3e86b7b1-c506-40df-8356-d1da836dee9d",
+              "name": "facts",
+              "value": "Phone: (000) 000-0000. Open Mon–Sat 7am–7pm. Same-day visits when booked before noon. Licensed and insured. EDIT THESE TO YOUR REAL FACTS.",
+              "type": "string"
+            },
+            {
+              "id": "419cf544-2448-4f20-b587-948ef8b4990a",
+              "name": "sitemap_url",
+              "value": "https://yourwebsite.com/sitemap.xml",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5366bbf7-3550-4a50-880d-692596a3752f",
+      "name": "SEO Team · Your business",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4600,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://places.googleapis.com/v1/places:searchText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Goog-FieldMask",
+              "value": "places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.formattedAddress"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ textQuery: $json.service + ' in ' + $json.city, pageSize: 10 }) }}",
+        "options": {}
+      },
+      "id": "e8ddcad6-6999-45b8-87d4-3682b019d159",
+      "name": "SEO Team · Find competitors",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4820,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const mine = $('SEO Team · Your business').first().json.business_name.toLowerCase();\nreturn ($input.first().json.places || [])\n  .filter(p => !(p.displayName?.text || '').toLowerCase().includes(mine))\n  .slice(0, 7)\n  .map(p => ({ json: { name: p.displayName?.text, rating: p.rating, reviews: p.userRatingCount, website: p.websiteUri, address: p.formattedAddress } }));"
+      },
+      "id": "c115e1e5-37ad-4d17-a01f-f8b64b53d725",
+      "name": "SEO Team · Shortlist competitors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5040,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('SEO Team · Your business').first().json.sitemap_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "7c90c862-9826-4acb-9e74-4d03563f30ad",
+      "name": "SEO Team · Read your sitemap",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5260,
+        410
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = $input.first().json.data || '';\nconst pages = [...xml.matchAll(/<loc>(.*?)<\\/loc>/g)].map(m => m[1]);\nreturn [{ json: { pages } }];"
+      },
+      "id": "fe6558fc-7e38-4022-8684-558c7e07991f",
+      "name": "SEO Team · List your pages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5480,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a local SEO research agent.\n\nMY BUSINESS: {{ $('SEO Team · Your business').first().json.business_name }}, a {{ $('SEO Team · Your business').first().json.service }} in {{ $('SEO Team · Your business').first().json.city }}.\nTowns I serve: {{ $('SEO Team · Your business').first().json.towns }}\n\nCOMPETITORS NEAR ME (from Google Maps):\n{{ JSON.stringify($('SEO Team · Shortlist competitors').all().map(i => i.json), null, 1) }}\n\nPAGES ALREADY ON MY WEBSITE:\n{{ $json.pages.join('\\n') }}\n\nList the local searches customers make for this service (e.g. 'same-day X near me', 'emergency X in <town>', 'X prices', 'weekend X') that competitors seem to cover but my website has NO page for. Return up to 8 gaps.",
+        "hasOutputParser": true
+      },
+      "id": "c6b8faab-77b8-48bc-b155-056382932b89",
+      "name": "SEO Team · Research agent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        5700,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "728edc8e-9069-4abc-ba81-0417593d1a23",
+      "name": "SEO Team · Claude (research)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        5660,
+        630
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"gaps\": [\n    {\n      \"search\": \"emergency plumber Round Rock\",\n      \"why\": \"3 competitors rank with a page, you have none\",\n      \"monthly_interest\": \"high\"\n    }\n  ]\n}"
+      },
+      "id": "4fd99a01-6a3c-4404-9bed-9824a557e408",
+      "name": "SEO Team · Gaps output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        5800,
+        630
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a local SEO strategy agent. From these gaps, pick the ONE page most likely to bring calls for {{ $('SEO Team · Your business').first().json.business_name }} ({{ $('SEO Team · Your business').first().json.service }}, {{ $('SEO Team · Your business').first().json.city }}). Prefer high-intent searches (urgent, near me, a specific town).\n\nGAPS:\n{{ JSON.stringify($json.output.gaps, null, 1) }}",
+        "hasOutputParser": true
+      },
+      "id": "8c21eac3-345b-486c-acc6-e223624c646e",
+      "name": "SEO Team · Strategy agent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        6100,
+        410
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "1a49b0fd-cc7a-4989-86c8-39ba4e2ee2c1",
+      "name": "SEO Team · Claude (strategy)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        6060,
+        630
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"keyword\": \"same-day plumber near me\",\n  \"title\": \"Same-Day Plumber in Austin, Round Rock & Kyle\",\n  \"towns\": \"Austin, Round Rock, Kyle\",\n  \"reason\": \"high intent, no page yet\"\n}"
+      },
+      "id": "39134b71-3351-4464-af3d-2191d12633b4",
+      "name": "SEO Team · Pick output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        6200,
+        630
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const o = $input.first().json.output;\nreturn [{ json: { keyword: o.keyword, title: o.title, towns: o.towns, fixes: '' } }];"
+      },
+      "id": "79bb98ac-6aac-4ac4-b9ed-94f7de63edf3",
+      "name": "SEO Team · Prep brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4840,
+        970
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a writing agent for {{ $('SEO Team · Your business').first().json.business_name }}, a {{ $('SEO Team · Your business').first().json.service }} in {{ $('SEO Team · Your business').first().json.city }}.\nWrite a helpful local landing page.\n\nTARGET SEARCH: {{ $json.keyword }}\nWORKING TITLE: {{ $json.title }}\nTOWNS: {{ $json.towns }}\nBUSINESS FACTS (use only these, never invent prices, reviews or guarantees):\n{{ $('SEO Team · Your business').first().json.facts }}\n\nAnswer the real questions a customer asks: what you do, how fast, where, opening hours, how to book. Add a short FAQ (4 questions). Clear headings, short paragraphs, plain HTML (h2, p, ul, li only). End with a call-to-action with the phone number.\n\n{{ $json.fixes ? 'THE EDITOR SENT THIS BACK. FIX ALL OF THESE:\\n' + $json.fixes : '' }}",
+        "hasOutputParser": true
+      },
+      "id": "c9aa8add-df3a-4342-839e-6143a88ec716",
+      "name": "SEO Team · Writing agent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        5060,
+        970
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "ee661095-8dd3-4adb-ae61-3c220769809b",
+      "name": "SEO Team · Claude (writer)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        5020,
+        1190
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"title\": \"Same-Day Plumber in Austin, Round Rock & Kyle\",\n  \"slug\": \"same-day-plumber-austin\",\n  \"meta_description\": \"Need a plumber today? ...\",\n  \"html\": \"<h2>...</h2><p>...</p>\"\n}"
+      },
+      "id": "c6464baf-8a19-429b-b76d-eac3cdc50faf",
+      "name": "SEO Team · Page output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        5160,
+        1190
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a strict editor agent. Check this page against the brief and SEO best practice for Google and AI search (ChatGPT, Gemini).\n\nTARGET SEARCH: {{ $('SEO Team · Prep brief').first().json.keyword }}\nTOWNS: {{ $('SEO Team · Prep brief').first().json.towns }}\nBUSINESS FACTS: {{ $('SEO Team · Your business').first().json.facts }}\n\nPAGE TITLE: {{ $json.output.title }}\nPAGE HTML:\n{{ $json.output.html }}\n\nFail the page if: the title doesn't contain the service + a location, any listed town is missing, it states anything not in the facts, the FAQ is missing, or there's no call-to-action. passes = true only if everything is fine. List each problem in fixes.",
+        "hasOutputParser": true
+      },
+      "id": "96348394-ac6f-4874-8789-87816830a9f7",
+      "name": "SEO Team · Editor agent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        5460,
+        970
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "ba0e5360-99c7-410f-b8ed-7b3fb6c9b80e",
+      "name": "SEO Team · Claude (editor)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        5420,
+        1190
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"passes\": false,\n  \"fixes\": [\n    \"Title is missing the town\",\n    \"Kyle is not mentioned\"\n  ]\n}"
+      },
+      "id": "5b5d28d1-915b-4bb4-97d4-46df9020b96e",
+      "name": "SEO Team · Check output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        5560,
+        1190
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "db512a4f-03c6-492a-aa54-0282303b79b0",
+              "leftValue": "={{ $json.output.passes || $runIndex >= 2 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "4e89d6f8-4c65-49d1-a1d0-ca81c3755efd",
+      "name": "SEO Team · Passes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5860,
+        970
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const brief = $('SEO Team · Prep brief').first().json;\nconst fixes = ($input.first().json.output.fixes || []).join('\\n');\nreturn [{ json: { ...brief, fixes } }];"
+      },
+      "id": "1b4264a1-fcc0-4508-9ec2-d0d74830dd29",
+      "name": "SEO Team · No – send back to writer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6080,
+        1210
+      ]
+    },
+    {
+      "parameters": {
+        "title": "={{ $('SEO Team · Writing agent').last().json.output.title }}",
+        "additionalFields": {
+          "content": "={{ $('SEO Team · Writing agent').last().json.output.html }}",
+          "slug": "={{ $('SEO Team · Writing agent').last().json.output.slug }}",
+          "status": "draft"
+        }
+      },
+      "id": "f0592470-6bf3-475b-9fb8-db6316c3ee66",
+      "name": "SEO Team · Publish to WordPress",
+      "type": "n8n-nodes-base.wordpress",
+      "typeVersion": 1,
+      "position": [
+        6100,
+        930
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Content"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Link",
+              "displayName": "Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "value": {
+            "Date": "={{ $now.toISODate() }}",
+            "Type": "SEO page (WordPress draft)",
+            "Title": "={{ $('SEO Team · Writing agent').last().json.output.title }}",
+            "Link": "={{ $json.link || '' }}",
+            "Status": "draft"
+          }
+        },
+        "options": {}
+      },
+      "id": "33e9d6fc-a59e-464c-8e77-5e05003867e8",
+      "name": "SEO Team · Log to Content",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5920,
+        930
+      ]
+    },
+    {
+      "id": "feb35f7c-a62c-455a-ba7b-a36468a6dd76",
+      "name": "Video→Posts · Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        4380,
+        1610
+      ],
+      "parameters": {
+        "formTitle": "1 video → 5 posts",
+        "formDescription": "Paste a YouTube link. The 5 posts land in the Content tab of your sheet in ~1 minute.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "YouTube link",
+              "placeholder": "https://youtube.com/watch?v=...",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "disabled": true
+    },
+    {
+      "id": "fae6aa3b-a361-4162-9a20-769be69bc8e7",
+      "name": "Video→Posts · Get transcript",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4640,
+        1610
+      ],
+      "parameters": {
+        "url": "https://api.supadata.ai/v1/youtube/transcript",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json['YouTube link'] }}"
+            },
+            {
+              "name": "text",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.TRANSCRIPT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c61ec216-1daf-4046-8897-98e9fd599ac4",
+      "name": "Video→Posts · Claude repurposes",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        4900,
+        1610
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Transcript:\n{{ (typeof $json.content === 'string' ? $json.content : JSON.stringify($json.content || $json)).slice(0, 15000) }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are a content repurposer. From this video transcript write 5 posts in the creator's voice. Use only ideas that are in the transcript; no made-up stats. Return ONLY JSON: {\"title\": \"short video title\", \"instagram\": \"caption with hook + 3-5 hashtags\", \"linkedin\": \"post, short lines, no hashtags spam\", \"x_thread\": \"5 tweets separated by blank lines\", \"shorts_hook\": \"first 3 seconds script\", \"newsletter\": \"120-word blurb\"}"
+        }
+      }
+    },
+    {
+      "id": "f53a6afd-3bea-44f8-91a5-eb4cca1aafa9",
+      "name": "Video→Posts · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        4900,
+        1830
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ca354037-2163-43a4-8fff-d24599fccbec",
+      "name": "Video→Posts · Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5160,
+        1610
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { error: 'no JSON', raw } };"
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Content"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Type",
+              "displayName": "Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Instagram",
+              "displayName": "Instagram",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "LinkedIn",
+              "displayName": "LinkedIn",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "X thread",
+              "displayName": "X thread",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Shorts hook",
+              "displayName": "Shorts hook",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Newsletter",
+              "displayName": "Newsletter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "value": {
+            "Date": "={{ $now.toISODate() }}",
+            "Type": "Video → 5 posts",
+            "Title": "={{ $json.title }}",
+            "Instagram": "={{ $json.instagram }}",
+            "LinkedIn": "={{ $json.linkedin }}",
+            "X thread": "={{ $json.x_thread }}",
+            "Shorts hook": "={{ $json.shorts_hook }}",
+            "Newsletter": "={{ $json.newsletter }}",
+            "Status": "ready to post"
+          }
+        },
+        "options": {}
+      },
+      "id": "9ab2ffd8-02a7-4542-9465-61bafd9fc823",
+      "name": "Video→Posts · Save to Content",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5420,
+        1610
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "acdc264d-c59d-4747-a36b-74c111bae56e",
+      "name": "Reviews · Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        4380,
+        2350
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://mybusiness.googleapis.com/v4/accounts/YOUR_ACCOUNT_ID/locations/YOUR_LOCATION_ID/reviews",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "pageSize",
+              "value": "20"
+            },
+            {
+              "name": "orderBy",
+              "value": "updateTime desc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9dd66033-ca55-402c-b195-a206d78d3e39",
+      "name": "Reviews · Get new reviews",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4600,
+        2350
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stars = { ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5 };\nreturn ($input.first().json.reviews || [])\n  .filter(r => !r.reviewReply)\n  .map(r => ({ json: { review_id: r.reviewId, name: (r.reviewer?.displayName || 'there').split(' ')[0], stars: stars[r.starRating] || 0, comment: r.comment || '(no text)' } }));"
+      },
+      "id": "fdab1d62-d936-42e8-b211-84bfb1869c5b",
+      "name": "Reviews · Only unanswered",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4820,
+        2350
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You manage Google reviews for a local business.\nBusiness: Bright Smile Dental. Tone: warm, short, human, thank them by first name, never argue, never mention prices or medical details, sign off as 'The Bright Smile team'.\n\nREVIEW ({{ $json.stars }} stars) from {{ $json.name }}:\n{{ $json.comment }}\n\nClassify the sentiment (happy / neutral / angry). angry = 1-2 stars OR a complaint, threat, refund demand or anything legal. Write a reply of max 60 words in the brand voice. For angry reviews also write a one-line summary for the owner.",
+        "hasOutputParser": true
+      },
+      "id": "be03bea6-9f59-43ef-a5e1-115916363a31",
+      "name": "Reviews · Claude reads review",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        5040,
+        2350
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "id": "8de26888-04fb-498a-984c-7ac768dcb888",
+      "name": "Reviews · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        5000,
+        2570
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"sentiment\": \"happy\",\n  \"angry\": false,\n  \"reply\": \"Thank you Aman! So glad the cleaning was quick and painless. See you at your next check-up. The Bright Smile team\",\n  \"owner_summary\": \"\"\n}"
+      },
+      "id": "c2616d61-123f-4260-aa62-7cf8e80d6349",
+      "name": "Reviews · Structured output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        5160,
+        2570
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "68c9db29-e5ca-4c79-be8c-a6f8e7fd907c",
+              "leftValue": "={{ $json.output.angry }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "e5392db8-f653-4919-92af-9cdd9508047c",
+      "name": "Reviews · Angry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5260,
+        2350
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Angry {{ $('Reviews · Only unanswered').item.json.stars }}-star review from {{ $('Reviews · Only unanswered').item.json.name }}",
+        "message": "=Review: {{ $('Reviews · Only unanswered').item.json.comment }}\n\nSummary: {{ $json.output.owner_summary }}\n\nSuggested reply (NOT posted):\n{{ $json.output.reply }}",
+        "options": {
+          "sendTo": "you@yourbusiness.com"
+        }
+      },
+      "id": "518c082a-d591-4f98-82d2-c1693829ff09",
+      "name": "Reviews · Draft alert to owner",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        5500,
+        2230
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://mybusiness.googleapis.com/v4/accounts/YOUR_ACCOUNT_ID/locations/YOUR_LOCATION_ID/reviews/{{ $('Reviews · Only unanswered').item.json.review_id }}/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ comment: $json.output.reply }) }}",
+        "options": {}
+      },
+      "id": "ca387f3f-7094-4773-a655-5f3d244528be",
+      "name": "Reviews · Post reply on Google",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5500,
+        2470
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Reviews"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviewer",
+              "displayName": "Reviewer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Stars",
+              "displayName": "Stars",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Review",
+              "displayName": "Review",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reply",
+              "displayName": "Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "value": {
+            "Date": "={{ $now.toISODate() }}",
+            "Reviewer": "={{ $('Reviews · Only unanswered').item.json.name }}",
+            "Stars": "={{ $('Reviews · Only unanswered').item.json.stars }}",
+            "Review": "={{ $('Reviews · Only unanswered').item.json.comment }}",
+            "Sentiment": "={{ $('Reviews · Claude reads review').item.json.output.sentiment }}",
+            "Reply": "={{ $('Reviews · Claude reads review').item.json.output.reply }}",
+            "Action": "sent to owner"
+          }
+        },
+        "options": {}
+      },
+      "id": "706a8bf8-45b8-4d8b-8ff6-701e6f1416ec",
+      "name": "Reviews · Log (sent to owner)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5740,
+        2230
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Reviews"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviewer",
+              "displayName": "Reviewer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Stars",
+              "displayName": "Stars",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Review",
+              "displayName": "Review",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reply",
+              "displayName": "Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "value": {
+            "Date": "={{ $now.toISODate() }}",
+            "Reviewer": "={{ $('Reviews · Only unanswered').item.json.name }}",
+            "Stars": "={{ $('Reviews · Only unanswered').item.json.stars }}",
+            "Review": "={{ $('Reviews · Only unanswered').item.json.comment }}",
+            "Sentiment": "={{ $('Reviews · Claude reads review').item.json.output.sentiment }}",
+            "Reply": "={{ $('Reviews · Claude reads review').item.json.output.reply }}",
+            "Action": "reply posted"
+          }
+        },
+        "options": {}
+      },
+      "id": "c3326c6a-eba2-434f-9030-fc690688be17",
+      "name": "Reviews · Log (reply posted)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5740,
+        2470
+      ]
+    },
+    {
+      "id": "7beb9c18-8159-4bd1-875f-9f7803fe11ec",
+      "name": "Bill Reader · Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        6840,
+        410
+      ],
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 5,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "has:attachment filename:pdf (invoice OR bill OR receipt)"
+        },
+        "options": {
+          "downloadAttachments": true,
+          "dataPropertyAttachmentsPrefixName": "attachment_"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "id": "3d00c10d-bde2-46d0-a9c3-35b587265653",
+      "name": "Bill Reader · Extract from File",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        7100,
+        410
+      ],
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      }
+    },
+    {
+      "id": "23e53f56-7938-4b78-9c05-89449bda4187",
+      "name": "Bill Reader · Claude reads bill",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        7360,
+        410
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Bill text:\n{{ ($json.text || '').slice(0, 8000) }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "Extract data from this bill/invoice. Use null for anything not present; never guess. Date as YYYY-MM-DD, amount and gst as plain numbers. Return ONLY JSON: {\"vendor\": \"...\", \"invoice_no\": \"...\", \"date\": \"...\", \"amount\": 0, \"gst\": 0, \"currency\": \"INR\"}"
+        }
+      }
+    },
+    {
+      "id": "cf52b739-e7fb-4d39-a5cc-295a065a1f74",
+      "name": "Bill Reader · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        7360,
+        630
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "13001ddb-8522-4a1d-9d3b-6cbd4778d3af",
+      "name": "Bill Reader · Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7620,
+        410
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { error: 'no JSON', raw } };"
+      }
+    },
+    {
+      "id": "ced6e892-fc73-49f3-b91a-80624e434153",
+      "name": "Bill Reader · Row fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7880,
+        410
+      ],
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({ Date: $now.toISODate(), ...$json, file: $('Bill Reader · Gmail Trigger').item.binary?.attachment_0?.fileName, received: $('Bill Reader · Gmail Trigger').item.json.date }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "b7c279a9-18cf-4bd0-a887-145499ae70d0",
+      "name": "Bill Reader · Sheets Append",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        8140,
+        410
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Bills"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "has:attachment filename:pdf (resume OR CV OR application OR job)"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "id": "a886bad4-0d6f-4450-ac89-d399f75bd038",
+      "name": "Resume Screener · Gmail – new resume",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        6840,
+        1030
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "id": "e5f2eeac-3151-46b7-b23e-48360aa84d22",
+      "name": "Resume Screener · Read PDF text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        7060,
+        1030
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert HR recruiter. Score this candidate's resume against the job description.\n\n=== EDIT THIS: JOB DESCRIPTION ===\nRole: Sales Executive\nMust have: 1+ years B2B / field sales, Excel, CRM (any), good communication (Hindi + English)\nNice to have: lead generation, cold calling, local market knowledge\nLocation: Pune (on-site)\n=== END ===\n\nRESUME TEXT:\n{{ $json.text }}\n\nReturn: candidate name, email, phone, total years of experience (number), top 5 relevant skills, a score from 0 to 10 for fit with the job, a one-line reason, and status = \"Shortlist\" if score >= 7 else \"Reject\". Be strict and fair; judge only on skills and experience.",
+        "hasOutputParser": true
+      },
+      "id": "c28d9212-a147-4baa-a57a-4d5586de1c00",
+      "name": "Resume Screener · Claude scores resume",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        7280,
+        1030
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "c09a8eb7-d01b-49d4-87d4-ba780b004e7e",
+      "name": "Resume Screener · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        7240,
+        1250
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"name\": \"Rohan Verma\",\n  \"email\": \"candidate@example.com\",\n  \"phone\": \"+1 555 0100\",\n  \"experience_years\": 3,\n  \"skills\": [\n    \"B2B Sales\",\n    \"Excel\",\n    \"CRM\",\n    \"Cold calling\",\n    \"Lead generation\"\n  ],\n  \"score\": 8.5,\n  \"reason\": \"3 yrs field B2B sales, CRM + Excel\",\n  \"status\": \"Shortlist\"\n}"
+      },
+      "id": "6b522ab6-fa1f-46ee-8d44-434d8c2d0d5b",
+      "name": "Resume Screener · Structured output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        7420,
+        1250
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Candidates"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toISODate() }}",
+            "Name": "={{ $json.output.name }}",
+            "Email": "={{ $json.output.email }}",
+            "Phone": "={{ $json.output.phone }}",
+            "Experience": "={{ $json.output.experience_years }}",
+            "Skills": "={{ $json.output.skills.join(', ') }}",
+            "Score": "={{ $json.output.score }}",
+            "Status": "={{ $json.output.status }}",
+            "Reason": "={{ $json.output.reason }}",
+            "Subject": "={{ $('Resume Screener · Gmail – new resume').item.json.subject }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Experience",
+              "displayName": "Experience",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7a5ac03e-c7cd-41da-a98c-6d4353f5bb70",
+      "name": "Resume Screener · Save to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        7640,
+        1030
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 20
+            }
+          ]
+        }
+      },
+      "id": "02811f49-0343-430c-a9f5-68dbdc4a48b7",
+      "name": "Invoice Chaser · Every night 8 PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        6840,
+        1650
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Invoices"
+        },
+        "options": {}
+      },
+      "id": "baaf6e44-e30d-4bfe-addb-f32cf9bc75b7",
+      "name": "Invoice Chaser · Read invoices",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        7060,
+        1650
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = $now.startOf('day');\nconst out = [];\nfor (const { json: r } of $input.all()) {\n  if (String(r['Status']).toLowerCase() === 'paid' || !r['Due date'] || !r['Email']) continue;\n  const days = Math.floor(today.diff(DateTime.fromISO(String(r['Due date'])), 'days').days);\n  if (days < 1) continue;\n  if (r['Last reminder'] === today.toISODate()) continue;\n  const tone = days <= 7 ? 'friendly' : days <= 21 ? 'firm' : 'final';\n  out.push({ json: { ...r, days_overdue: days, tone, reminders: Number(r['Reminders sent'] || 0) } });\n}\nreturn out;"
+      },
+      "id": "cb63f694-dd71-4e09-8bbb-fec957c1c135",
+      "name": "Invoice Chaser · Find overdue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7280,
+        1650
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You write payment reminder emails for Northwind Studio (a small agency).\n\nInvoice {{ $json['Invoice No'] }} for {{ $json['Amount'] }} to {{ $json['Client'] }} (contact: {{ $json['Contact name'] }}) was due on {{ $json['Due date'] }}. It is {{ $json.days_overdue }} days overdue. Reminders already sent: {{ $json.reminders }}.\n\nTone: {{ $json.tone }}.\n- friendly: assume they forgot, short and warm.\n- firm: clear, mention the due date and ask for a payment date.\n- final: polite but serious, say work may pause and late fees may apply per our terms.\n\nMax 120 words. No guilt-tripping. Return a subject and a plain-text body signed 'Accounts, Northwind Studio'.",
+        "hasOutputParser": true
+      },
+      "id": "c6daa6ee-abef-454a-9ad9-8bb5b71ba6a3",
+      "name": "Invoice Chaser · Claude writes reminder",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        7500,
+        1650
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "c2a8b810-1bdc-4628-bded-f8833f26ebe3",
+      "name": "Invoice Chaser · Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        7460,
+        1870
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"subject\": \"Quick reminder: invoice INV-1042\",\n  \"body\": \"Hi Arjun,\\n\\nJust a friendly nudge that invoice INV-1042 for $1,200 was due on 2 Oct...\"\n}"
+      },
+      "id": "bf6b2fc8-0dba-46d7-b92f-8a9c8d844265",
+      "name": "Invoice Chaser · Structured output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        7620,
+        1870
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Invoice Chaser · Find overdue').item.json['Email'] }}",
+        "subject": "={{ $json.output.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.output.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "9215bcda-0a1b-462f-9246-a0b837bf6881",
+      "name": "Invoice Chaser · Send reminder",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        7720,
+        1650
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Invoices"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Invoice No": "={{ $('Invoice Chaser · Find overdue').item.json['Invoice No'] }}",
+            "Reminders sent": "={{ $('Invoice Chaser · Find overdue').item.json.reminders + 1 }}",
+            "Last reminder": "={{ $now.toISODate() }}"
+          },
+          "matchingColumns": [
+            "Invoice No"
+          ],
+          "schema": [
+            {
+              "id": "Invoice No",
+              "displayName": "Invoice No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Client",
+              "displayName": "Client",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact name",
+              "displayName": "Contact name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Due date",
+              "displayName": "Due date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reminders sent",
+              "displayName": "Reminders sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last reminder",
+              "displayName": "Last reminder",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3cbdbfd9-c4e0-459d-9a73-f8b4a39430a4",
+      "name": "Invoice Chaser · Update sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        7940,
+        1650
+      ]
+    }
+  ],
+  "connections": {
+    "Lead Finder · Every morning 8 AM": {
+      "main": [
+        [
+          {
+            "node": "Lead Finder · Your search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Finder · Your search": {
+      "main": [
+        [
+          {
+            "node": "Lead Finder · Google Maps search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Finder · Google Maps search": {
+      "main": [
+        [
+          {
+            "node": "Lead Finder · One row per business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Finder · One row per business": {
+      "main": [
+        [
+          {
+            "node": "Lead Finder · Check website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Finder · Check website": {
+      "main": [
+        [
+          {
+            "node": "Lead Finder · Website notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Finder · Website notes": {
+      "main": [
+        [
+          {
+            "node": "Lead Finder · Claude writes first line",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Finder · Claude writes first line": {
+      "main": [
+        [
+          {
+            "node": "Lead Finder · Save to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Finder · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Lead Finder · Claude writes first line",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Finder · Structured output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Lead Finder · Claude writes first line",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WA Replier · Claude replies": {
+      "main": [
+        [
+          {
+            "node": "WA Replier · Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WA Replier · Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "WA Replier · WhatsApp Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WA Replier · WhatsApp Send": {
+      "main": [
+        [
+          {
+            "node": "WA Replier · Hand to Qualifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WA Replier · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "WA Replier · Claude replies",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualifier · Webhook": {
+      "main": [
+        [
+          {
+            "node": "Qualifier · Lead in",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualifier · Claude Qualify": {
+      "main": [
+        [
+          {
+            "node": "Qualifier · Build Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualifier · Build Row": {
+      "main": [
+        [
+          {
+            "node": "Qualifier · Save to Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Qualifier · Is Hot?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualifier · Is Hot?": {
+      "main": [
+        [
+          {
+            "node": "Qualifier · WhatsApp Owner Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Qualifier · Has WhatsApp number?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receptionist · AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Receptionist · Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receptionist · Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Receptionist · Book?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receptionist · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Receptionist · AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receptionist · Calendar tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Receptionist · AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receptionist · Book?": {
+      "main": [
+        [
+          {
+            "node": "Receptionist · Book slot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Receptionist · WhatsApp Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receptionist · Book slot": {
+      "main": [
+        [
+          {
+            "node": "Receptionist · WhatsApp Send",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Receptionist · Schedule reminder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Receptionist · Log booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receptionist · Schedule reminder": {
+      "main": [
+        [
+          {
+            "node": "Receptionist · WhatsApp Send (reminder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Missed Call · Missed call": {
+      "main": [
+        [
+          {
+            "node": "Missed Call · Claude writes WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Missed Call · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Missed Call · Claude writes WhatsApp",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Missed Call · Claude writes WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Missed Call · WhatsApp text-back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inbox Sorter · Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Inbox Sorter · Claude classify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inbox Sorter · Claude classify": {
+      "main": [
+        [
+          {
+            "node": "Inbox Sorter · Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inbox Sorter · Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Inbox Sorter · Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inbox Sorter · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Inbox Sorter · Claude classify",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inbox Sorter · Switch": {
+      "main": [
+        [
+          {
+            "node": "Inbox Sorter · Create Draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Inbox Sorter · Add Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Every night 2 AM": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Your business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Your business": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Find competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Find competitors": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Shortlist competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Shortlist competitors": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Read your sitemap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Read your sitemap": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · List your pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · List your pages": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Research agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Research agent": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Strategy agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Strategy agent": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Prep brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Prep brief": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Writing agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Writing agent": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Editor agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Editor agent": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Passes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Passes?": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Publish to WordPress",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SEO Team · No – send back to writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · No – send back to writer": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Writing agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Claude (research)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SEO Team · Research agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Gaps output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "SEO Team · Research agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Claude (strategy)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SEO Team · Strategy agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Pick output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "SEO Team · Strategy agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Claude (writer)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SEO Team · Writing agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Page output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "SEO Team · Writing agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Claude (editor)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SEO Team · Editor agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Check output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "SEO Team · Editor agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video→Posts · Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Video→Posts · Get transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video→Posts · Get transcript": {
+      "main": [
+        [
+          {
+            "node": "Video→Posts · Claude repurposes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video→Posts · Claude repurposes": {
+      "main": [
+        [
+          {
+            "node": "Video→Posts · Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video→Posts · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Video→Posts · Claude repurposes",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reviews · Every hour": {
+      "main": [
+        [
+          {
+            "node": "Reviews · Get new reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reviews · Get new reviews": {
+      "main": [
+        [
+          {
+            "node": "Reviews · Only unanswered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reviews · Only unanswered": {
+      "main": [
+        [
+          {
+            "node": "Reviews · Claude reads review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reviews · Claude reads review": {
+      "main": [
+        [
+          {
+            "node": "Reviews · Angry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reviews · Angry?": {
+      "main": [
+        [
+          {
+            "node": "Reviews · Draft alert to owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reviews · Post reply on Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reviews · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reviews · Claude reads review",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reviews · Structured output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Reviews · Claude reads review",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bill Reader · Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Bill Reader · Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bill Reader · Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Bill Reader · Claude reads bill",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bill Reader · Claude reads bill": {
+      "main": [
+        [
+          {
+            "node": "Bill Reader · Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bill Reader · Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Bill Reader · Row fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bill Reader · Row fields": {
+      "main": [
+        [
+          {
+            "node": "Bill Reader · Sheets Append",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bill Reader · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Bill Reader · Claude reads bill",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Screener · Gmail – new resume": {
+      "main": [
+        [
+          {
+            "node": "Resume Screener · Read PDF text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Screener · Read PDF text": {
+      "main": [
+        [
+          {
+            "node": "Resume Screener · Claude scores resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Screener · Claude scores resume": {
+      "main": [
+        [
+          {
+            "node": "Resume Screener · Save to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Screener · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Resume Screener · Claude scores resume",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Screener · Structured output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Resume Screener · Claude scores resume",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice Chaser · Read invoices": {
+      "main": [
+        [
+          {
+            "node": "Invoice Chaser · Find overdue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice Chaser · Find overdue": {
+      "main": [
+        [
+          {
+            "node": "Invoice Chaser · Claude writes reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice Chaser · Claude writes reminder": {
+      "main": [
+        [
+          {
+            "node": "Invoice Chaser · Send reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice Chaser · Send reminder": {
+      "main": [
+        [
+          {
+            "node": "Invoice Chaser · Update sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice Chaser · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Invoice Chaser · Claude writes reminder",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice Chaser · Structured output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Invoice Chaser · Claude writes reminder",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer WhatsApp (in)": {
+      "main": [
+        [
+          {
+            "node": "Booking or new question?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking or new question?": {
+      "main": [
+        [
+          {
+            "node": "Receptionist · AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WA Replier · Claude replies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WA Replier · Hand to Qualifier": {
+      "main": [
+        [
+          {
+            "node": "Qualifier · Lead in",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualifier · Lead in": {
+      "main": [
+        [
+          {
+            "node": "Qualifier · Claude Qualify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualifier · Has WhatsApp number?": {
+      "main": [
+        [
+          {
+            "node": "Receptionist · Booking offer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Missed Call · WhatsApp text-back": {
+      "main": [
+        [
+          {
+            "node": "Missed Call · Hand to Qualifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Missed Call · Hand to Qualifier": {
+      "main": [
+        [
+          {
+            "node": "Qualifier · Lead in",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Team · Publish to WordPress": {
+      "main": [
+        [
+          {
+            "node": "SEO Team · Log to Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video→Posts · Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Video→Posts · Save to Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reviews · Draft alert to owner": {
+      "main": [
+        [
+          {
+            "node": "Reviews · Log (sent to owner)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reviews · Post reply on Google": {
+      "main": [
+        [
+          {
+            "node": "Reviews · Log (reply posted)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invoice Chaser · Every night 8 PM": {
+      "main": [
+        [
+          {
+            "node": "Invoice Chaser · Read invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Every night 9 PM": {
+      "main": [
+        [
+          {
+            "node": "Manager · Read Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Read Leads": {
+      "main": [
+        [
+          {
+            "node": "Manager · Read Bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Read Bookings": {
+      "main": [
+        [
+          {
+            "node": "Manager · Read Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Read Content": {
+      "main": [
+        [
+          {
+            "node": "Manager · Read Reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Read Reviews": {
+      "main": [
+        [
+          {
+            "node": "Manager · Read Bills",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Read Bills": {
+      "main": [
+        [
+          {
+            "node": "Manager · Read Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Read Invoices": {
+      "main": [
+        [
+          {
+            "node": "Manager · Read Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Read Candidates": {
+      "main": [
+        [
+          {
+            "node": "Manager · Today's numbers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Today's numbers": {
+      "main": [
+        [
+          {
+            "node": "Manager · Claude writes owner report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Manager · Claude writes owner report",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · Claude writes owner report": {
+      "main": [
+        [
+          {
+            "node": "Manager · WhatsApp owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager · WhatsApp owner": {
+      "main": [
+        [
+          {
+            "node": "Manager · Save to Daily Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

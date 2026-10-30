@@ -1,0 +1,460 @@
+{
+  "name": "18 · No-Show Stopper (Kaamchor AI · MAP 2.0 · Ops)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 18 · No-Show Killer\nAppointment se 1 din pehle + 2 ghante pehle WhatsApp reminder (1 = confirm, 2 = cancel). Cancel → slot free → waitlist ke pehle customer ko offer.\n\n**Setup (15 min)**\n1. WhatsApp nodes: **WhatsApp Business Cloud API** credential + your **Phone Number ID** (replace YOUR_PHONE_NUMBER_ID).\n2. Google Calendar OAuth2 credential. Put `phone: 91XXXXXXXXXX` in each appointment's description.\n3. Google Sheets: **Google Sheets OAuth2** credential, paste your sheet URL in place of YOUR_GOOGLE_SHEET_URL. Tab **Waitlist**: Name, Phone, Status.\n4. AI model: **Anthropic** credential (or swap the model node for OpenAI / Gemini).",
+        "height": 540,
+        "width": 360,
+        "color": 5
+      },
+      "id": "73327b79-531e-4033-9c73-eac0408b5b70",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "e9cf5df6-d3d8-4207-8d92-d8c5413e73e3",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $now.toISO() }}",
+        "timeMax": "={{ $now.plus({ hours: 26 }).toISO() }}",
+        "options": {}
+      },
+      "id": "9727aed6-4a13-48da-b16b-94eaf4ec582f",
+      "name": "Next 26h appointments",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// event description must contain the customer's WhatsApp like: phone: 9198xxxxxxxx\nconst out = [];\nfor (const { json: e } of $input.all()) {\n  if (!e.start) continue;\n  const start = DateTime.fromISO(e.start.dateTime);\n  const h = start.diff($now, 'hours').hours;\n  const phone = (e.description || '').match(/phone:\\s*(\\d{10,13})/)?.[1];\n  if (!phone) continue;\n  const kind = (h > 23 && h <= 24) ? 'day-before' : (h > 1 && h <= 2) ? '2-hours' : null;\n  if (kind) out.push({ json: { eventId: e.id, name: (e.summary || '').split(/ [–-] /)[0].trim(), phone, kind, when: start.setZone('Asia/Kolkata').toFormat('ccc d LLL, h:mm a') } });\n}\nreturn out;"
+      },
+      "id": "1bdbc06a-d213-43a9-95a9-305d3a2f34ae",
+      "name": "Due for reminder?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $json.phone }}",
+        "textBody": "={{ $json.name }} ji, reminder: aapka appointment *{{ $json.when }}* ko hai – YOUR BUSINESS NAME.\nReply *1* = aa raha hoon ✅  ·  *2* = cancel ❌",
+        "additionalFields": {}
+      },
+      "id": "50d07634-9050-4e74-98d2-12ce381ace1b",
+      "name": "Reminder + confirm",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        660,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "32e65745-c002-4ac0-9b03-2ddb53dc2f8a",
+      "name": "Customer replies",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer replied to an appointment reminder: \"{{ $json.messages?.[0]?.text?.body }}\". Classify: confirm (1, yes, haan, aa raha), cancel (2, no, nahi aa paunga), reschedule (asks another time), other.",
+        "hasOutputParser": true
+      },
+      "id": "f52a091b-8d42-4ef7-89ce-81a59e06cdb7",
+      "name": "AI reads reply",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        220,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "746d5eb9-77ee-4190-b9b8-fba563dd3c75",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        220,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"intent\": \"cancel\"\n}"
+      },
+      "id": "6132d86b-a707-411a-a6af-680bace30da4",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        420,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $now.toISO() }}",
+        "timeMax": "={{ $now.plus({ hours: 26 }).toISO() }}",
+        "options": {
+          "query": "={{ $('Customer replies').item.json.messages[0].from }}"
+        }
+      },
+      "id": "c744bd14-8057-429b-9633-62da5da2f3de",
+      "name": "Find their appointment",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        520,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('AI reads reply').item.json.output.intent === 'cancel' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "568745c7-16d6-404f-bb28-0a7ee3d11c2d",
+      "name": "Cancelled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        740,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary"
+        },
+        "eventId": "={{ $json.id }}",
+        "options": {}
+      },
+      "id": "45ebca1d-a1b8-440f-a746-6a48037eb372",
+      "name": "Free the slot",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        960,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Waitlist"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "=waiting"
+            }
+          ]
+        }
+      },
+      "id": "12c3b995-f5e1-4dc4-b1e8-5bb6d71ea6c5",
+      "name": "Waitlist",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1180,
+        120
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "id": "1e2b953a-dc37-441b-b517-92567e1cd0a9",
+      "name": "First on waitlist",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $json.Phone }}",
+        "textBody": "={{ $json.Name }} ji, good news! Ek slot khali hua: *{{ DateTime.fromISO($('Find their appointment').item.json.start.dateTime).setZone('Asia/Kolkata').toFormat('ccc d LLL, h:mm a') }}*. Chahiye to *YES* likhiye.",
+        "additionalFields": {}
+      },
+      "id": "4a005338-a44b-439a-985a-3982bd375411",
+      "name": "Offer slot",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1620,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Customer replies').item.json.messages[0].from }}",
+        "textBody": "={{ $('AI reads reply').item.json.output.intent === 'confirm' ? 'Shukriya! 🙏 Aapka appointment confirm hai. Time pe milte hain.' : 'Theek hai ji, reception aapko call karke naya time fix karega 🙏' }}",
+        "additionalFields": {}
+      },
+      "id": "419b3681-d5f3-43ca-8131-96d7ee3e106f",
+      "name": "Thanks",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Next 26h appointments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Next 26h appointments": {
+      "main": [
+        [
+          {
+            "node": "Due for reminder?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Due for reminder?": {
+      "main": [
+        [
+          {
+            "node": "Reminder + confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer replies": {
+      "main": [
+        [
+          {
+            "node": "AI reads reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI reads reply",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI reads reply",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI reads reply": {
+      "main": [
+        [
+          {
+            "node": "Find their appointment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find their appointment": {
+      "main": [
+        [
+          {
+            "node": "Cancelled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelled?": {
+      "main": [
+        [
+          {
+            "node": "Free the slot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Thanks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Free the slot": {
+      "main": [
+        [
+          {
+            "node": "Waitlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Waitlist": {
+      "main": [
+        [
+          {
+            "node": "First on waitlist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "First on waitlist": {
+      "main": [
+        [
+          {
+            "node": "Offer slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

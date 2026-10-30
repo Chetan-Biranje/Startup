@@ -1,0 +1,245 @@
+{
+  "name": "04 · Repeat-Order Reminder (Kaamchor AI · MAP 2.0 · Sales)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 04 · Re-order Reminder\nRegular dawai khatam hone se 3 din pehle WhatsApp → customer re-order / visit book karta hai. Customer bhi khush, business ka repeat bhi.\n\n**Setup (10 min)**\n1. Google Sheets: **Google Sheets OAuth2** credential, paste your sheet URL in place of YOUR_GOOGLE_SHEET_URL. Tab **Orders**: Name, Phone, Product, Start date, Days supply, Status (active).\n2. WhatsApp nodes: **WhatsApp Business Cloud API** credential + your **Phone Number ID** (replace YOUR_PHONE_NUMBER_ID).\n3. AI model: **Anthropic** credential (or swap the model node for OpenAI / Gemini).\nOnly for customers who agreed to WhatsApp reminders.",
+        "height": 500,
+        "width": 340,
+        "color": 5
+      },
+      "id": "74d7dbe2-510e-4381-a9b8-348af543e5b2",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "eadfe181-51dd-4d21-be46-cc52374c3de9",
+      "name": "Daily 10 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Orders"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "=active"
+            }
+          ]
+        }
+      },
+      "id": "7837d5cf-8552-4565-afc6-ce70e3a18158",
+      "name": "Orders",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        220,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// columns: Name, Phone, Product, Start date (yyyy-mm-dd), Days supply, Status\nconst out = [];\nfor (const { json: r } of $input.all()) {\n  if (!r.Phone || !r['Start date']) continue;\n  const end = DateTime.fromISO(r['Start date']).plus({ days: Number(r['Days supply'] || 0) });\n  const left = Math.round(end.diff($now.startOf('day'), 'days').days);\n  if (left === 3) out.push({ json: { ...r, days_left: left } });\n}\nreturn out;"
+      },
+      "id": "ddd2fad1-c49b-4bbd-a2dc-7479b7408bc0",
+      "name": "Running out soon?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a short, friendly Hinglish WhatsApp (Roman script, max 3 lines) to {{ $json.Name }}: their {{ $json.Product }} will finish in {{ $json.days_left }} days. Ask if they want a re-order or a follow-up visit with the owner (reply REFILL or VISIT). Do NOT mention dose or medical advice. Sign: YOUR BUSINESS NAME.",
+        "hasOutputParser": false
+      },
+      "id": "3561f32e-00a2-4313-8c7f-67c5df25c16e",
+      "name": "AI writes reminder",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "8f07b994-ca76-48d8-a3fc-a5a58c79c3b4",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        660,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Running out soon?').item.json.Phone }}",
+        "textBody": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "ee73f248-5fc5-45a2-bc18-b1fed9a13df0",
+      "name": "Send reminder",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Orders"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Phone"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "1b026945-b2ce-4a9b-98e6-655eaa14293d",
+      "name": "Mark reminded",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1100,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 10 AM": {
+      "main": [
+        [
+          {
+            "node": "Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Orders": {
+      "main": [
+        [
+          {
+            "node": "Running out soon?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Running out soon?": {
+      "main": [
+        [
+          {
+            "node": "AI writes reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI writes reminder",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes reminder": {
+      "main": [
+        [
+          {
+            "node": "Send reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send reminder": {
+      "main": [
+        [
+          {
+            "node": "Mark reminded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

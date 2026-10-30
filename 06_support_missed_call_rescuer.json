@@ -1,0 +1,174 @@
+{
+  "name": "06 · Missed-Call Rescuer (Kaamchor AI · MAP 2.0 · Support)",
+  "nodes": [
+    {
+      "id": "dc938f88-6d80-4bb8-a7d0-ebb8c0ca0c1b",
+      "name": "Setup s1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -220
+      ],
+      "parameters": {
+        "width": 420,
+        "height": 460,
+        "color": 4,
+        "content": "## Missed call text-back\nCall miss → Claude writes a WhatsApp → sent in seconds → lead saved to Sheet.\n\n**Setup (15 min)**\n1. **Trigger:** your phone must POST `{ from, name, time }` to this webhook's Production URL on every missed call. Android: MacroDroid (trigger *Call Missed* → action *HTTP Request*). Business number: Exotel / Knowlarity missed-call webhook.\n   `from` = number with country code, digits only (e.g. 9198xxxxxxxx).\n2. **WhatsApp text-back:** WhatsApp Business Cloud API credential + your Phone Number ID.\n3. **Claude:** Anthropic API key. Edit the system prompt with your business.\n4. **Log lead:** sheet tab `Leads` with columns `phone, name, time, status`. Paste its ID.\n5. Activate.\n\n---\nPart of **MAP – 12 AI agents** (Kaamchor AI)."
+      }
+    },
+    {
+      "id": "b19f0c0c-96d2-466a-836d-8d66d956bd33",
+      "name": "Missed call",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "missed-call",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "38fb02c8-eda6-4c37-a7a6-96dd67da3efe",
+      "name": "Claude writes WhatsApp",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Missed call from {{ $json.body.from }} at {{ $json.body.time }}. Known customer name: {{ $json.body.name || 'unknown' }}.",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the assistant of YOUR BUSINESS NAME. The owner missed a call because he is on a job. Write a short, warm WhatsApp message in the customer's language (English or Hinglish). Start with \"Hello ji\", never \"Namaste\": say sorry for missing the call, ask what they need and their area, promise a callback. Return JSON: reply, lead_name, phone."
+        }
+      }
+    },
+    {
+      "id": "628aeeda-7282-4f75-83c6-6862cad25a0f",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        260,
+        220
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "bf9d0b37-dbec-417f-a17d-002e520dc2f4",
+      "name": "WhatsApp text-back",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Missed call').item.json.body.from }}",
+        "textBody": "={{ (() => { const r = $json.output || ''; const m = r.match(/\\{[\\s\\S]*\\}/); try { return m ? JSON.parse(m[0]).reply : r; } catch (e) { return r; } })() }}",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "a178bd51-64f2-4c0d-86db-e6697fdb6164",
+      "name": "Log lead",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "phone": "={{ $('Missed call').item.json.body.from }}",
+            "name": "={{ $('Missed call').item.json.body.name || '' }}",
+            "time": "={{ $('Missed call').item.json.body.time || $now.toISO() }}",
+            "status": "texted"
+          }
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Missed call": {
+      "main": [
+        [
+          {
+            "node": "Claude writes WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Claude writes WhatsApp",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude writes WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp text-back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp text-back": {
+      "main": [
+        [
+          {
+            "node": "Log lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

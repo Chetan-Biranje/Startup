@@ -1,0 +1,262 @@
+{
+  "name": "08 · FAQ Bot (Kaamchor AI · MAP 2.0 · Support)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 08 · FAQ Bot\nFees kitni? ITR ke liye kya documents? Last date kab hai? WhatsApp pe turant jawab, sirf aapki FAQ sheet se. Notice / penalty / tax calculation → owner ko alert.\n\n**Setup (10 min)**\n1. WhatsApp nodes: **WhatsApp Business Cloud API** credential + your **Phone Number ID** (replace YOUR_PHONE_NUMBER_ID).\n2. Google Sheets: **Google Sheets OAuth2** credential, paste your sheet URL in place of YOUR_GOOGLE_SHEET_URL. Tab **FAQ** with columns Question, Answer.\n3. AI model: **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n4. Replace YOUR_OFFICE_WHATSAPP (country code, no +).",
+        "height": 520,
+        "width": 340,
+        "color": 5
+      },
+      "id": "3667ed33-9b00-4717-8325-59f05805b258",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      },
+      "id": "4eb55b5c-4552-4368-8981-0cb6d94988ae",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Client {{ $json.contacts?.[0]?.profile?.name || '' }} asks: {{ $json.messages?.[0]?.text?.body }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the WhatsApp front desk of YOUR FIRM NAME, a small business. Answer ONLY from the 'Firm FAQ' sheet tool (fees per service, office timings, address, documents needed for ITR / GST registration / GST return, standard due dates, payment modes). Reply in the client's language (Hinglish/Hindi/English), max 3 short lines, warm and professional. Greet with 'Hello <name> ji', never 'Namaste'. If the answer is not in the sheet, set handoff=true and say our team will call back. Never give tax or legal advice beyond the firm's FAQ sheet, never promise refunds or outcomes, never quote a client's financial data to anyone else. Anything about notices, penalties, scrutiny or a specific tax calculation goes to the owner (handoff).\nOutput ONLY JSON: {\"reply\": \"...\", \"handoff\": false, \"topic\": \"fees|deadline|documents|timing|other\"}"
+        }
+      },
+      "id": "0051e082-61dd-42a9-9359-c36f14661160",
+      "name": "AI answers FAQ",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "0d2d8cf3-e6f5-417f-9e62-9f73d17cc4be",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        180,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "FAQ"
+        },
+        "options": {},
+        "descriptionType": "manual",
+        "toolDescription": "business FAQ: question / answer rows written by the firm (fees, deadlines, documents, timings)."
+      },
+      "id": "f8fdcd5f-f2f8-4256-b0fe-7b3f9c22928c",
+      "name": "Firm FAQ sheet",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [
+        380,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { reply: 'Ek minute, hamari team aapko call karegi 🙏', handoff: true, topic: 'other' } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "6b60ff78-bc89-4744-b566-40b52d860a00",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "textBody": "={{ $json.reply }}",
+        "additionalFields": {}
+      },
+      "id": "66178f86-6fa0-41a1-b54d-37a84ca667b7",
+      "name": "Reply to client",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        760,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.handoff }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cb68f917-7d2a-4443-a27f-92622cb0ba36",
+      "name": "Needs CA?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        760,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_OFFICE_WHATSAPP",
+        "textBody": "=🔔 Client question needs a human:\nFrom: {{ $('WhatsApp Trigger').item.json.messages[0].from }}\n\"{{ $('WhatsApp Trigger').item.json.messages[0].text.body }}\"",
+        "additionalFields": {}
+      },
+      "id": "7d0fde54-bfd5-431d-9f1c-419731a48e3d",
+      "name": "Alert office",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        980,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI answers FAQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI answers FAQ",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firm FAQ sheet": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI answers FAQ",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI answers FAQ": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Reply to client",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Needs CA?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs CA?": {
+      "main": [
+        [
+          {
+            "node": "Alert office",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

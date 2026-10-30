@@ -1,0 +1,340 @@
+{
+  "name": "20 · Document Chaser (Kaamchor AI · MAP 2.0 · Ops)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 20 · Doc Chaser\nJo documents client ne abhi tak nahi bheje: din 2, 5 aur 9 pe follow-up (pehle pyaar se, phir firm). 12 din baad bhi nahi → owner ko \"call kar lo\" alert.\n\n**Setup (10 min)**\n1. Google Sheets: **Google Sheets OAuth2** credential, paste your sheet URL in place of YOUR_GOOGLE_SHEET_URL. Tab **Pending docs**: Client, Phone, Document, Asked on, Reminders, Status (pending/received).\n2. WhatsApp nodes: **WhatsApp Business Cloud API** credential + your **Phone Number ID** (replace YOUR_PHONE_NUMBER_ID).\n3. AI model: **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n4. Replace YOUR_CA_WHATSAPP. Workflow 01 can set Status = received automatically.",
+        "height": 540,
+        "width": 360,
+        "color": 5
+      },
+      "id": "ae1d4648-7524-4330-a15b-a66d88109aa1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 11,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "334cf317-785b-4750-a0e2-3a19c6902f2a",
+      "name": "Daily 11 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Pending docs"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "=pending"
+            }
+          ]
+        }
+      },
+      "id": "5bca921c-ca3b-4800-b953-949dc1a6aa74",
+      "name": "Pending documents",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        220,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pending docs tab: Client, Phone, Document, Asked on (yyyy-mm-dd), Reminders, Status\n// stage 1 = day 2 (polite), 2 = day 5 (firm), 3 = day 9 (deadline risk), after that → alert the owner instead\nconst STAGES = { 2: 1, 5: 2, 9: 3 };\nconst out = [];\nfor (const { json: r } of $input.all()) {\n  if (!r.Phone || !r['Asked on']) continue;\n  const days = Math.round($now.startOf('day').diff(DateTime.fromISO(r['Asked on']), 'days').days);\n  if (STAGES[days]) out.push({ json: { ...r, days, stage: STAGES[days], escalate: false } });\n  else if (days === 12) out.push({ json: { ...r, days, stage: 4, escalate: true } });\n}\nreturn out;"
+      },
+      "id": "45ab46ee-5e45-46ee-89cf-95ea7d30c746",
+      "name": "Follow-up stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.escalate }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "46e56bf5-e2d7-4bd7-be35-c93399980056",
+      "name": "Escalate to CA?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_CA_WHATSAPP",
+        "textBody": "=📞 {{ $json.Client }} ne 12 din se *{{ $json.Document }}* nahi bheja (3 reminders ho gaye). Ek call kar lijiye: {{ $json.Phone }}",
+        "additionalFields": {}
+      },
+      "id": "4d226aae-0ec4-4ffc-8121-f1413974990c",
+      "name": "Alert CA",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a short WhatsApp (Hinglish, Roman script, max 3 lines) from a small business to client {{ $json.Client }} asking for their {{ $json.Document }}. It was first asked {{ $json.days }} days ago. Tone by stage {{ $json.stage }}: 1 = friendly nudge, 2 = polite but firm, 3 = clear that the filing deadline is at risk. Start with 'Hello {{ $json.Client }} ji', never 'Namaste'. No threats, no penalty amounts, no tax advice. Sign: YOUR FIRM NAME. Output ONLY the message text – no heading, no quotes, no code fences.",
+        "hasOutputParser": false
+      },
+      "id": "9a1856e6-7ec0-4bbc-b640-7e53ba0b2ee9",
+      "name": "AI writes follow-up",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        880,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "b33cf092-8499-431f-a3ca-de094dcd4068",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('Follow-up stage').item.json.Phone }}",
+        "textBody": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "d4a91486-4189-45de-8aac-e7859fda28f7",
+      "name": "Send follow-up",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $('Follow-up stage').item.json;\nreturn { json: { Phone: r.Phone, Reminders: Number(r.Reminders || 0) + 1 } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "a1d0c861-83fc-470b-9699-21514b3249bc",
+      "name": "Count reminder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Pending docs"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Phone"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "f210f548-361d-4e68-8a97-e87608a485d2",
+      "name": "Update sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1540,
+        80
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 11 AM": {
+      "main": [
+        [
+          {
+            "node": "Pending documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pending documents": {
+      "main": [
+        [
+          {
+            "node": "Follow-up stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Follow-up stage": {
+      "main": [
+        [
+          {
+            "node": "Escalate to CA?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalate to CA?": {
+      "main": [
+        [
+          {
+            "node": "Alert CA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI writes follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI writes follow-up",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI writes follow-up": {
+      "main": [
+        [
+          {
+            "node": "Send follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send follow-up": {
+      "main": [
+        [
+          {
+            "node": "Count reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count reminder": {
+      "main": [
+        [
+          {
+            "node": "Update sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,344 @@
+{
+  "name": "14 · Invoice Chaser (Kaamchor AI · MAP 2.0 · Finance)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 💸 Invoice Chaser – polite reminders that get firmer\nEvery night at 9 PM: read your invoices sheet → find unpaid invoices past their due date → Claude writes a reminder whose tone matches how late it is (1-7 days friendly, 8-21 days firm, 22+ days final notice) → Gmail sends it → the sheet is updated so nobody gets two emails in one day.\n\n**Setup (10 min)**\n1. Google Sheet with headers: Invoice No, Client, Contact name, Email, Amount, Due date, Status, Reminders sent, Last reminder. Due date as YYYY-MM-DD. Status = Paid stops the reminders.\n2. **Read invoices** + **Update sheet**: connect Google Sheets and pick that sheet.\n3. **Claude**: add your Anthropic API key. Put your business name in the prompt.\n4. **Send reminder**: connect Gmail.\n5. Test with your own email in the sheet first, then Activate.\n\n---\nPart of **MAP – 12 AI agents** (Kaamchor AI).",
+        "height": 420,
+        "width": 560,
+        "color": 5
+      },
+      "id": "bfa5b1f5-998b-49bc-8690-1932a321025d",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 21
+            }
+          ]
+        }
+      },
+      "id": "d6a7d5c3-a2a2-4af8-8fba-03d0cd79fd70",
+      "name": "Every night 9 PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "164b9f8b-398e-4dbd-ad57-17483d8b972c",
+      "name": "Read invoices",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = $now.startOf('day');\nconst out = [];\nfor (const { json: r } of $input.all()) {\n  if (String(r['Status']).toLowerCase() === 'paid' || !r['Due date'] || !r['Email']) continue;\n  const days = Math.floor(today.diff(DateTime.fromISO(String(r['Due date'])), 'days').days);\n  if (days < 1) continue;\n  if (r['Last reminder'] === today.toISODate()) continue;\n  const tone = days <= 7 ? 'friendly' : days <= 21 ? 'firm' : 'final';\n  out.push({ json: { ...r, days_overdue: days, tone, reminders: Number(r['Reminders sent'] || 0) } });\n}\nreturn out;"
+      },
+      "id": "dc997e0c-2cb2-4ca3-9f6d-d70088c9cd11",
+      "name": "Find overdue",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You write payment reminder emails for Northwind Studio (a small agency).\n\nInvoice {{ $json['Invoice No'] }} for {{ $json['Amount'] }} to {{ $json['Client'] }} (contact: {{ $json['Contact name'] }}) was due on {{ $json['Due date'] }}. It is {{ $json.days_overdue }} days overdue. Reminders already sent: {{ $json.reminders }}.\n\nTone: {{ $json.tone }}.\n- friendly: assume they forgot, short and warm.\n- firm: clear, mention the due date and ask for a payment date.\n- final: polite but serious, say work may pause and late fees may apply per our terms.\n\nMax 120 words. No guilt-tripping. Return a subject and a plain-text body signed 'Accounts, Northwind Studio'.",
+        "hasOutputParser": true
+      },
+      "id": "b6ae7e07-fb88-452c-847b-4770ba7cc7f2",
+      "name": "Claude writes reminder",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "8ffd9723-c1bf-40ad-81e7-eb33592ff242",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        620,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"subject\": \"Quick reminder: invoice INV-1042\",\n  \"body\": \"Hi Arjun,\\n\\nJust a friendly nudge that invoice INV-1042 for $1,200 was due on 2 Oct...\"\n}"
+      },
+      "id": "0bb9e4d7-a045-4793-aac7-c8c49489a47c",
+      "name": "Structured output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        780,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Find overdue').item.json['Email'] }}",
+        "subject": "={{ $json.output.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.output.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "cac50def-bc7e-4140-aea7-535009d237e1",
+      "name": "Send reminder",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Invoice No": "={{ $('Find overdue').item.json['Invoice No'] }}",
+            "Reminders sent": "={{ $('Find overdue').item.json.reminders + 1 }}",
+            "Last reminder": "={{ $now.toISODate() }}"
+          },
+          "matchingColumns": [
+            "Invoice No"
+          ],
+          "schema": [
+            {
+              "id": "Invoice No",
+              "displayName": "Invoice No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Client",
+              "displayName": "Client",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Contact name",
+              "displayName": "Contact name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Due date",
+              "displayName": "Due date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reminders sent",
+              "displayName": "Reminders sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last reminder",
+              "displayName": "Last reminder",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5365889b-fb7e-4b00-8f2c-0f446b0561b2",
+      "name": "Update sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1100,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every night 9 PM": {
+      "main": [
+        [
+          {
+            "node": "Read invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read invoices": {
+      "main": [
+        [
+          {
+            "node": "Find overdue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find overdue": {
+      "main": [
+        [
+          {
+            "node": "Claude writes reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude writes reminder": {
+      "main": [
+        [
+          {
+            "node": "Send reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send reminder": {
+      "main": [
+        [
+          {
+            "node": "Update sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Claude writes reminder",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Claude writes reminder",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

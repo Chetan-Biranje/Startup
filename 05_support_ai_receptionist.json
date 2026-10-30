@@ -1,0 +1,320 @@
+{
+  "name": "05 · AI Receptionist (Kaamchor AI · MAP 2.0 · Support)",
+  "nodes": [
+    {
+      "id": "98a0c2c0-fad5-45e1-b46d-ffbc19f8ff7c",
+      "name": "Setup s1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -240
+      ],
+      "parameters": {
+        "content": "## 05 · AI receptionist\nCustomer WhatsApps → Claude checks your Google Calendar, books a free slot, confirms → sends a reminder 1 day before.\n\n**Setup (15 min)**\n1. WhatsApp Trigger + both WhatsApp nodes: **WhatsApp Business Cloud API** credential + your **Phone Number ID**.\n2. Calendar tool + Book slot: **Google Calendar OAuth2** credential.\n3. Claude: **Anthropic API key**.\n4. Edit the system prompt: business name, hours, slot length, services.\n5. Activate.\n\nThe reminder uses a Wait node, so keep n8n running (cloud or a server).\n\n---\nPart of **MAP – 12 AI agents** (Kaamchor AI).",
+        "width": 420,
+        "height": 480,
+        "color": 4
+      }
+    },
+    {
+      "id": "d6c84b24-13c8-473f-8ba1-f546143f2120",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      }
+    },
+    {
+      "id": "cb4d4284-a79e-4dbc-a2e0-3087d41c08d9",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Now: {{ $now.toISO() }}\nCustomer {{ $json.contacts?.[0]?.profile?.name || 'unknown' }} ({{ $json.messages?.[0]?.from }}) wrote: {{ $json.messages?.[0]?.text?.body }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the WhatsApp receptionist of YOUR BUSINESS (hours 10:00-19:00, 30-min slots, closed Sunday). Reply in the customer's language (Hinglish is fine). Use the calendar tool to check which slots are busy before proposing one. Only book when the customer has agreed to a specific time. Return ONLY JSON: {\"book\": true|false, \"name\": \"...\", \"reason\": \"...\", \"start\": \"ISO datetime or null\", \"end\": \"ISO datetime or null\", \"reply\": \"message to send\"}"
+        }
+      }
+    },
+    {
+      "id": "f23e2e8a-0ccd-4d06-8406-25c785212792",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        180,
+        220
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d1b037b7-59b4-4781-bc0a-95d5a880172b",
+      "name": "Calendar tool",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        340,
+        220
+      ],
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $fromAI('timeMin', 'start of range, ISO') }}",
+        "timeMax": "={{ $fromAI('timeMax', 'end of range, ISO') }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "2d1bffd0-483c-4088-9444-9b52cab014d8",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { error: 'no JSON', raw } };"
+      }
+    },
+    {
+      "id": "bfcd0aee-88e9-4dd9-adab-fc86b2371140",
+      "name": "Book?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5a5d27ce-f7c7-4460-ad6f-886c68d7aa39",
+              "leftValue": "={{ $json.book }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "52114d29-f788-4986-b145-a7e15f7c531c",
+      "name": "Book slot",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1040,
+        -120
+      ],
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "mode": "list",
+          "value": "primary"
+        },
+        "start": "={{ $json.start }}",
+        "end": "={{ $json.end }}",
+        "additionalFields": {
+          "summary": "={{ $json.name }} - {{ $json.reason }} ({{ $('WhatsApp Trigger').item.json.messages[0].from }})"
+        }
+      }
+    },
+    {
+      "id": "619fed97-5685-42e5-ba57-98b760327db9",
+      "name": "WhatsApp Send",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "textBody": "={{ $('Parse JSON').item.json.reply }}",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "ddcbfb02-5192-427b-9057-85b88f643766",
+      "name": "Schedule reminder",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1300,
+        -240
+      ],
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ DateTime.fromISO($('Parse JSON').item.json.start).minus({ days: 1 }).toISO() }}"
+      }
+    },
+    {
+      "id": "5c668feb-f114-4faa-9dff-5c39b1be11b5",
+      "name": "WhatsApp Send (reminder)",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        -240
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "textBody": "=Reminder: your appointment is tomorrow, {{ DateTime.fromISO($('Parse JSON').item.json.start).toFormat('dd LLL, h:mm a') }} . Reply here if you need to reschedule.",
+        "additionalFields": {}
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Book?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book?": {
+      "main": [
+        [
+          {
+            "node": "Book slot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book slot": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Schedule reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule reminder": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send (reminder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,294 @@
+{
+  "name": "11 · Review Replier (Kaamchor AI · MAP 2.0 · Marketing)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ⭐ Review Replier – Google reviews on autopilot\nEvery hour: fetch new Google reviews → Claude classifies each one and drafts an on-brand reply → happy reviews get the reply posted → angry ones are NOT posted; you get an email draft to handle them yourself.\n\n**Setup (15 min)**\n1. **Get new reviews** + **Post reply on Google**: Google Business Profile API access (OAuth2 credential with scope `business.manage`). Replace `YOUR_ACCOUNT_ID` and `YOUR_LOCATION_ID` in both URLs.\n2. **Claude**: add your Anthropic API key credential. Edit the brand voice in *Claude reads review*.\n3. **Draft alert to owner**: connect Gmail and put your email in *To*. It only creates a draft.\n4. Execute once, check the replies, then Activate.\n\n---\nPart of **MAP – 12 AI agents** (Kaamchor AI).",
+        "height": 400,
+        "width": 560,
+        "color": 5
+      },
+      "id": "7a967552-3aa5-4f6e-ae79-47b8e4ac112b",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "8b30f7ea-34e9-495a-8985-31e017fe505d",
+      "name": "Every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://mybusiness.googleapis.com/v4/accounts/YOUR_ACCOUNT_ID/locations/YOUR_LOCATION_ID/reviews",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "pageSize",
+              "value": "20"
+            },
+            {
+              "name": "orderBy",
+              "value": "updateTime desc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "df72a01c-7fd9-4e29-8bb9-259efbbdbc78",
+      "name": "Get new reviews",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stars = { ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5 };\nreturn ($input.first().json.reviews || [])\n  .filter(r => !r.reviewReply)\n  .map(r => ({ json: { review_id: r.reviewId, name: (r.reviewer?.displayName || 'there').split(' ')[0], stars: stars[r.starRating] || 0, comment: r.comment || '(no text)' } }));"
+      },
+      "id": "8be8d903-ef78-47a4-9c2e-db26e2fa3653",
+      "name": "Only unanswered",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You manage Google reviews for a local business.\nBusiness: Bright Smile Dental. Tone: warm, short, human, thank them by first name, never argue, never mention prices or medical details, sign off as 'The Bright Smile team'.\n\nREVIEW ({{ $json.stars }} stars) from {{ $json.name }}:\n{{ $json.comment }}\n\nClassify the sentiment (happy / neutral / angry). angry = 1-2 stars OR a complaint, threat, refund demand or anything legal. Write a reply of max 60 words in the brand voice. For angry reviews also write a one-line summary for the owner.",
+        "hasOutputParser": true
+      },
+      "id": "239dbcc5-9992-4a33-a13c-77ec07515a3a",
+      "name": "Claude reads review",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "id": "45769398-ffd0-4091-893e-920d93e6d2ae",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        620,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"sentiment\": \"happy\",\n  \"angry\": false,\n  \"reply\": \"Thank you Aman! So glad the cleaning was quick and painless. See you at your next check-up. The Bright Smile team\",\n  \"owner_summary\": \"\"\n}"
+      },
+      "id": "eda76c91-43ba-40a2-b691-a304bec73963",
+      "name": "Structured output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        780,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "68c9db29-e5ca-4c79-be8c-a6f8e7fd907c",
+              "leftValue": "={{ $json.output.angry }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "884036e0-5c28-40be-9b08-e0482dcda13f",
+      "name": "Angry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Angry {{ $('Only unanswered').item.json.stars }}-star review from {{ $('Only unanswered').item.json.name }}",
+        "message": "=Review: {{ $('Only unanswered').item.json.comment }}\n\nSummary: {{ $json.output.owner_summary }}\n\nSuggested reply (NOT posted):\n{{ $json.output.reply }}",
+        "options": {
+          "sendTo": "you@yourbusiness.com"
+        }
+      },
+      "id": "76b428f9-cf60-4a96-90ab-8c7b54756b78",
+      "name": "Draft alert to owner",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://mybusiness.googleapis.com/v4/accounts/YOUR_ACCOUNT_ID/locations/YOUR_LOCATION_ID/reviews/{{ $('Only unanswered').item.json.review_id }}/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ comment: $json.output.reply }) }}",
+        "options": {}
+      },
+      "id": "e08f034a-1e79-42df-afa2-b34ebd0ea2a5",
+      "name": "Post reply on Google",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Get new reviews",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get new reviews": {
+      "main": [
+        [
+          {
+            "node": "Only unanswered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only unanswered": {
+      "main": [
+        [
+          {
+            "node": "Claude reads review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude reads review": {
+      "main": [
+        [
+          {
+            "node": "Angry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Angry?": {
+      "main": [
+        [
+          {
+            "node": "Draft alert to owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post reply on Google",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Claude reads review",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Claude reads review",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

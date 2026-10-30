@@ -1,0 +1,684 @@
+{
+  "name": "09 · SEO Page Team (Kaamchor AI · MAP 2.0 · Marketing)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🌙 FLOW – 5-Agent Local SEO Automation (@ai.nightshift)\nEvery night at 2 AM: research competitors → compare with your site → pick a missing search → write a page → editor checks it (sends it back if it fails) → publish to WordPress.\n\n**Setup**\n1. Fill in **Your business** (name, service, city, towns, facts, sitemap URL).\n2. **Find competitors**: add a *Header Auth* credential, name `X-Goog-Api-Key`, value = your Google Places API key.\n3. Connect your Anthropic key in the 4 **Claude** nodes.\n4. **Publish to WordPress**: connect WordPress (app password). It saves as **draft** first. Change status to *publish* once you trust it.\n5. Execute once, check the draft, then Activate.",
+        "height": 420,
+        "width": 560,
+        "color": 5
+      },
+      "id": "783dad22-9143-457b-977e-785bb55c8e6b",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -520
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 2
+            }
+          ]
+        }
+      },
+      "id": "03aba756-c291-435a-9d52-30855f1a27c3",
+      "name": "Every night 2 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9ef56265-be39-435b-8db7-df0352195b2c",
+              "name": "business_name",
+              "value": "Your Business",
+              "type": "string"
+            },
+            {
+              "id": "66bc156e-002b-453e-8f5b-8e5734899746",
+              "name": "service",
+              "value": "plumber",
+              "type": "string"
+            },
+            {
+              "id": "493916b3-adfa-4536-bab5-22dc9bae1df5",
+              "name": "city",
+              "value": "Austin, TX",
+              "type": "string"
+            },
+            {
+              "id": "f3548770-4050-45bc-93b5-0c5b0829b37a",
+              "name": "towns",
+              "value": "Austin, Round Rock, Kyle",
+              "type": "string"
+            },
+            {
+              "id": "3e86b7b1-c506-40df-8356-d1da836dee9d",
+              "name": "facts",
+              "value": "Phone: (000) 000-0000. Open Mon–Sat 7am–7pm. Same-day visits when booked before noon. Licensed and insured. EDIT THESE TO YOUR REAL FACTS.",
+              "type": "string"
+            },
+            {
+              "id": "419cf544-2448-4f20-b587-948ef8b4990a",
+              "name": "sitemap_url",
+              "value": "https://yourwebsite.com/sitemap.xml",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ccf81ebe-19b4-4ae8-af67-3fc7b783981b",
+      "name": "Your business",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://places.googleapis.com/v1/places:searchText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Goog-FieldMask",
+              "value": "places.displayName,places.rating,places.userRatingCount,places.websiteUri,places.formattedAddress"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ textQuery: $json.service + ' in ' + $json.city, pageSize: 10 }) }}",
+        "options": {}
+      },
+      "id": "0600146d-a746-4e87-8c31-af0e67321972",
+      "name": "Find competitors",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const mine = $('Your business').first().json.business_name.toLowerCase();\nreturn ($input.first().json.places || [])\n  .filter(p => !(p.displayName?.text || '').toLowerCase().includes(mine))\n  .slice(0, 7)\n  .map(p => ({ json: { name: p.displayName?.text, rating: p.rating, reviews: p.userRatingCount, website: p.websiteUri, address: p.formattedAddress } }));"
+      },
+      "id": "8e13d2fe-3c4f-4e55-afff-fdba85a59359",
+      "name": "Shortlist competitors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Your business').first().json.sitemap_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "be3f3879-d0a1-475e-9554-d17e6f728e6e",
+      "name": "Read your sitemap",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = $input.first().json.data || '';\nconst pages = [...xml.matchAll(/<loc>(.*?)<\\/loc>/g)].map(m => m[1]);\nreturn [{ json: { pages } }];"
+      },
+      "id": "3e094aa1-2fde-44be-9bba-7f3a34d8ef7d",
+      "name": "List your pages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a local SEO research agent.\n\nMY BUSINESS: {{ $('Your business').first().json.business_name }}, a {{ $('Your business').first().json.service }} in {{ $('Your business').first().json.city }}.\nTowns I serve: {{ $('Your business').first().json.towns }}\n\nCOMPETITORS NEAR ME (from Google Maps):\n{{ JSON.stringify($('Shortlist competitors').all().map(i => i.json), null, 1) }}\n\nPAGES ALREADY ON MY WEBSITE:\n{{ $json.pages.join('\\n') }}\n\nList the local searches customers make for this service (e.g. 'same-day X near me', 'emergency X in <town>', 'X prices', 'weekend X') that competitors seem to cover but my website has NO page for. Return up to 8 gaps.",
+        "hasOutputParser": true
+      },
+      "id": "4236c53a-5396-4273-9bf0-9dd6496a07e7",
+      "name": "Research agent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "1794ec2f-1c6c-4da9-9cfa-5c007b6c2e20",
+      "name": "Claude (research)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"gaps\": [\n    {\n      \"search\": \"emergency plumber Round Rock\",\n      \"why\": \"3 competitors rank with a page, you have none\",\n      \"monthly_interest\": \"high\"\n    }\n  ]\n}"
+      },
+      "id": "d9a08d9b-3a23-42cb-826f-93ff47a40bd8",
+      "name": "Gaps output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1420,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a local SEO strategy agent. From these gaps, pick the ONE page most likely to bring calls for {{ $('Your business').first().json.business_name }} ({{ $('Your business').first().json.service }}, {{ $('Your business').first().json.city }}). Prefer high-intent searches (urgent, near me, a specific town).\n\nGAPS:\n{{ JSON.stringify($json.output.gaps, null, 1) }}",
+        "hasOutputParser": true
+      },
+      "id": "c8b07776-ad68-44ee-aeac-9db8d39cd887",
+      "name": "Strategy agent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "cc0010a6-02ef-41ec-be34-d0b5e8e820fc",
+      "name": "Claude (strategy)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1680,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"keyword\": \"same-day plumber near me\",\n  \"title\": \"Same-Day Plumber in Austin, Round Rock & Kyle\",\n  \"towns\": \"Austin, Round Rock, Kyle\",\n  \"reason\": \"high intent, no page yet\"\n}"
+      },
+      "id": "e5f5c1c6-c8e3-4cd5-b99a-22add36eac12",
+      "name": "Pick output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1820,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const o = $input.first().json.output;\nreturn [{ json: { keyword: o.keyword, title: o.title, towns: o.towns, fixes: '' } }];"
+      },
+      "id": "6eddc71f-2701-40fc-98a0-0cf8a2558b60",
+      "name": "Prep brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a writing agent for {{ $('Your business').first().json.business_name }}, a {{ $('Your business').first().json.service }} in {{ $('Your business').first().json.city }}.\nWrite a helpful local landing page.\n\nTARGET SEARCH: {{ $json.keyword }}\nWORKING TITLE: {{ $json.title }}\nTOWNS: {{ $json.towns }}\nBUSINESS FACTS (use only these, never invent prices, reviews or guarantees):\n{{ $('Your business').first().json.facts }}\n\nAnswer the real questions a customer asks: what you do, how fast, where, opening hours, how to book. Add a short FAQ (4 questions). Clear headings, short paragraphs, plain HTML (h2, p, ul, li only). End with a call-to-action with the phone number.\n\n{{ $json.fixes ? 'THE EDITOR SENT THIS BACK. FIX ALL OF THESE:\\n' + $json.fixes : '' }}",
+        "hasOutputParser": true
+      },
+      "id": "9c67c866-32a2-4b76-9501-66d5e8de2ed7",
+      "name": "Writing agent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        2340,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "8d44cc43-8881-4860-aae5-32975c35e65d",
+      "name": "Claude (writer)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        2300,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"title\": \"Same-Day Plumber in Austin, Round Rock & Kyle\",\n  \"slug\": \"same-day-plumber-austin\",\n  \"meta_description\": \"Need a plumber today? ...\",\n  \"html\": \"<h2>...</h2><p>...</p>\"\n}"
+      },
+      "id": "e90364f9-b3b3-4a77-aceb-2461890c20ea",
+      "name": "Page output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2440,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a strict editor agent. Check this page against the brief and SEO best practice for Google and AI search (ChatGPT, Gemini).\n\nTARGET SEARCH: {{ $('Prep brief').first().json.keyword }}\nTOWNS: {{ $('Prep brief').first().json.towns }}\nBUSINESS FACTS: {{ $('Your business').first().json.facts }}\n\nPAGE TITLE: {{ $json.output.title }}\nPAGE HTML:\n{{ $json.output.html }}\n\nFail the page if: the title doesn't contain the service + a location, any listed town is missing, it states anything not in the facts, the FAQ is missing, or there's no call-to-action. passes = true only if everything is fine. List each problem in fixes.",
+        "hasOutputParser": true
+      },
+      "id": "e855abb6-2ce4-403e-a7e7-05d38cf82bbb",
+      "name": "Editor agent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        2740,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "52bfbd23-9546-4a60-a6cd-7508ead9db6a",
+      "name": "Claude (editor)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        2700,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"passes\": false,\n  \"fixes\": [\n    \"Title is missing the town\",\n    \"Kyle is not mentioned\"\n  ]\n}"
+      },
+      "id": "01f40103-9852-4b82-9a31-860b51b7f3e2",
+      "name": "Check output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2840,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "db512a4f-03c6-492a-aa54-0282303b79b0",
+              "leftValue": "={{ $json.output.passes || $runIndex >= 2 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "6e88e99d-2969-4289-af97-732868a4ec4a",
+      "name": "Passes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3140,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const brief = $('Prep brief').first().json;\nconst fixes = ($input.first().json.output.fixes || []).join('\\n');\nreturn [{ json: { ...brief, fixes } }];"
+      },
+      "id": "306633b6-8a2d-4930-87f7-2939e660e379",
+      "name": "No – send back to writer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "title": "={{ $('Writing agent').last().json.output.title }}",
+        "additionalFields": {
+          "content": "={{ $('Writing agent').last().json.output.html }}",
+          "slug": "={{ $('Writing agent').last().json.output.slug }}",
+          "status": "draft"
+        }
+      },
+      "id": "5b5cff2c-695a-49f9-9b6a-aa6d0d8a350b",
+      "name": "Publish to WordPress",
+      "type": "n8n-nodes-base.wordpress",
+      "typeVersion": 1,
+      "position": [
+        3380,
+        -40
+      ]
+    }
+  ],
+  "connections": {
+    "Every night 2 AM": {
+      "main": [
+        [
+          {
+            "node": "Your business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Your business": {
+      "main": [
+        [
+          {
+            "node": "Find competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find competitors": {
+      "main": [
+        [
+          {
+            "node": "Shortlist competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shortlist competitors": {
+      "main": [
+        [
+          {
+            "node": "Read your sitemap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read your sitemap": {
+      "main": [
+        [
+          {
+            "node": "List your pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List your pages": {
+      "main": [
+        [
+          {
+            "node": "Research agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research agent": {
+      "main": [
+        [
+          {
+            "node": "Strategy agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strategy agent": {
+      "main": [
+        [
+          {
+            "node": "Prep brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep brief": {
+      "main": [
+        [
+          {
+            "node": "Writing agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Writing agent": {
+      "main": [
+        [
+          {
+            "node": "Editor agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Editor agent": {
+      "main": [
+        [
+          {
+            "node": "Passes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Passes?": {
+      "main": [
+        [
+          {
+            "node": "Publish to WordPress",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No – send back to writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No – send back to writer": {
+      "main": [
+        [
+          {
+            "node": "Writing agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude (research)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Research agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gaps output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Research agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude (strategy)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Strategy agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Strategy agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude (writer)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Writing agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Page output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Writing agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude (editor)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Editor agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Editor agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

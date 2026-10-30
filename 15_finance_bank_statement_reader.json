@@ -1,0 +1,282 @@
+{
+  "name": "15 · Bank Statement Reader (Kaamchor AI · MAP 2.0 · Finance)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 15 · Statement Reader\nBank statement PDF upload karo → AI har transaction ki draft entry banata hai (ledger suggest karta hai) → sheet mein. Kam confidence wali entries CHECK mark. **Accountant check karta hai, tab hi Tally mein jaata hai.**\n\n**Setup (10 min)**\n1. Google Sheets: **Google Sheets OAuth2** credential, paste your sheet URL in place of YOUR_GOOGLE_SHEET_URL. Tab **Draft entries**.\n2. AI model: **Anthropic** credential (or swap the model node for OpenAI / Gemini).\n3. WhatsApp nodes: **WhatsApp Business Cloud API** credential + your **Phone Number ID** (replace YOUR_PHONE_NUMBER_ID). Replace YOUR_CA_WHATSAPP.\n\nLong statements: split by month. Scanned PDFs need OCR first.",
+        "height": 540,
+        "width": 360,
+        "color": 5
+      },
+      "id": "c3c25066-6f60-4c27-a9ec-44b9c0ba0a84",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Bank statement → draft entries",
+        "formDescription": "Staff only. Upload a text PDF statement (not a scan). Entries come out as DRAFTS for your accountant to check – nothing is posted to Tally.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Client",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Statement",
+              "fieldType": "file",
+              "acceptFileTypes": ".pdf",
+              "multipleFiles": false,
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "372afda6-5572-4ffa-9fbd-c7a0be071e3e",
+      "name": "Upload statement",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Statement",
+        "options": {}
+      },
+      "id": "caf46db7-46e8-4e11-9473-f7184361ff28",
+      "name": "Read PDF",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Bank statement text for client {{ $('Upload statement').item.json.Client }}:\n{{ $json.text }}\n\nFor EVERY transaction return: date (yyyy-mm-dd), narration, amount (number), type (Dr/Cr), a suggested ledger (e.g. Sales, Purchase, Rent, Salary, Bank Charges, GST Payment, Owner Drawings, Loan, Suspense), and confidence 0-1. Use Suspense with low confidence when unsure. Do not invent transactions; copy amounts exactly.",
+        "hasOutputParser": true
+      },
+      "id": "f0dfea37-1198-4e28-945c-18f2d7a3e3f3",
+      "name": "AI drafts entries",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "846d23ed-e7d6-46c5-ab8b-8b2ecd552907",
+      "name": "AI model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        440,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"entries\": [\n    {\n      \"date\": \"2026-09-03\",\n      \"narration\": \"UPI/RAJ TRADERS/purchase\",\n      \"amount\": 18400,\n      \"type\": \"Dr\",\n      \"ledger\": \"Purchase\",\n      \"confidence\": 0.9\n    }\n  ]\n}"
+      },
+      "id": "a0d30fd1-9188-4a81-adb7-17c2ed5011f2",
+      "name": "JSON shape",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const client = $('Upload statement').first().json.Client;\nconst E = $json.output.entries || [];\nconst rows = E.map(e => ({ json: { Client: client, Date: e.date, Narration: e.narration, Amount: e.amount, 'Dr/Cr': e.type,\n  Ledger: e.ledger, Confidence: e.confidence, Status: e.confidence < 0.7 ? 'CHECK' : 'Draft' } }));\nconst dr = E.filter(e => e.type === 'Dr').reduce((s, e) => s + Number(e.amount), 0);\nconst cr = E.filter(e => e.type === 'Cr').reduce((s, e) => s + Number(e.amount), 0);\nrows.forEach(r => Object.assign(r.json, { _total_dr: dr, _total_cr: cr, _count: E.length, _check: E.filter(e => e.confidence < 0.7).length }));\nreturn rows;"
+      },
+      "id": "cb96f88b-273e-434f-aab4-0ec3a03b7293",
+      "name": "Rows + checks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Draft entries"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "d6432659-66cc-4609-b0c4-352415e53382",
+      "name": "Draft entries sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        980,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c501958b-c314-4476-91ac-39ddf78d2f99",
+      "name": "Only one summary",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "=YOUR_CA_WHATSAPP",
+        "textBody": "=🧾 {{ $('Rows + checks').item.json.Client }}: {{ $('Rows + checks').item.json._count }} entries drafted.\nDr ₹{{ $('Rows + checks').item.json._total_dr.toLocaleString('en-IN') }} · Cr ₹{{ $('Rows + checks').item.json._total_cr.toLocaleString('en-IN') }}\n{{ $('Rows + checks').item.json._check }} need your check (Status = CHECK). Sheet: YOUR_GOOGLE_SHEET_URL",
+        "additionalFields": {}
+      },
+      "id": "c9df3f49-2522-4f06-920d-28a0459f61dd",
+      "name": "Tell the CA",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1420,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Upload statement": {
+      "main": [
+        [
+          {
+            "node": "Read PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PDF": {
+      "main": [
+        [
+          {
+            "node": "AI drafts entries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI drafts entries",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON shape": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI drafts entries",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI drafts entries": {
+      "main": [
+        [
+          {
+            "node": "Rows + checks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rows + checks": {
+      "main": [
+        [
+          {
+            "node": "Draft entries sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft entries sheet": {
+      "main": [
+        [
+          {
+            "node": "Only one summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only one summary": {
+      "main": [
+        [
+          {
+            "node": "Tell the CA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

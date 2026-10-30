@@ -1,0 +1,439 @@
+{
+  "name": "01 · Lead Finder (Kaamchor AI · MAP 2.0 · Sales)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🔎 Lead Finder – Google Maps → personal first line\nEvery morning: search Google Maps for businesses → open each website → Claude writes a personal first line for your cold email → new row in Google Sheets.\n\n**Setup (10 min)**\n1. **Your search**: set the search (e.g. `dentist in Austin TX`), how many results, and one line about what you sell.\n2. **Google Maps search**: in Google Cloud enable *Places API (New)*, create a key and paste it in the empty `X-Goog-Api-Key` header (or use a Header Auth credential).\n3. **Claude**: add your Anthropic API key credential.\n4. **Save to Google Sheet**: connect Google Sheets, make a sheet with headers: Date, Business, Website, Rating, Reviews, Address, Maps link, Observation, First line, Fit score, then pick it.\n5. Execute once, check the sheet, then Activate.\n\nNothing is emailed. You review the lines first.\n\n---\nPart of **MAP – 12 AI agents** (Kaamchor AI).",
+        "height": 380,
+        "width": 560,
+        "color": 5
+      },
+      "id": "f177a707-fd83-44ff-a768-453313e948ba",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -260
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "3cb8ccf8-0136-489d-ad15-fa508faf9d1f",
+      "name": "Every morning 8 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6a8c87ea-2109-4f57-9de6-d123d00201ba",
+              "name": "search",
+              "value": "dentist in Austin TX",
+              "type": "string"
+            },
+            {
+              "id": "bc697be3-1f8d-4190-b9c2-c474b51fef15",
+              "name": "max_results",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "d98b7c00-c596-4362-a152-8f890178e5bd",
+              "name": "my_offer",
+              "value": "We build AI receptionists that answer every call and WhatsApp and book appointments 24/7.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2516c9eb-630c-41ca-8081-558c2dac147d",
+      "name": "Your search",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://places.googleapis.com/v1/places:searchText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Goog-Api-Key",
+              "value": ""
+            },
+            {
+              "name": "X-Goog-FieldMask",
+              "value": "places.displayName,places.websiteUri,places.rating,places.userRatingCount,places.formattedAddress,places.googleMapsUri"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ textQuery: $json.search, pageSize: $json.max_results }) }}",
+        "options": {}
+      },
+      "id": "7771a4a5-e371-4697-9fbd-364f3c30278f",
+      "name": "Google Maps search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return ($input.first().json.places || [])\n  .filter(p => p.websiteUri)\n  .map(p => ({ json: { business: p.displayName?.text, website: p.websiteUri, rating: p.rating, reviews: p.userRatingCount, address: p.formattedAddress, maps: p.googleMapsUri } }));"
+      },
+      "id": "6b3fc888-4007-4a13-99da-68fbb34464d2",
+      "name": "One row per business",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.website }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "b966bcf4-6b0e-41dc-b396-fb9b1935e595",
+      "name": "Check website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map((item, i) => {\n  const biz = $('One row per business').all()[i].json;\n  const html = String(item.json.data || '');\n  const title = (html.match(/<title[^>]*>([^<]*)/i) || [])[1] || '';\n  const text = html.replace(/<script[\\s\\S]*?<\\/script>|<style[\\s\\S]*?<\\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim().slice(0, 2500);\n  const signals = { online_booking: /book (online|now)|appointment/i.test(html), chat_widget: /intercom|tawk|crisp|livechat|whatsapp/i.test(html) };\n  return { json: { ...biz, title, text, signals } };\n});"
+      },
+      "id": "f9708323-de0a-45fa-8146-115411773f18",
+      "name": "Website notes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You write the first line of a cold email. It must prove we really looked at this business.\n\nWHAT WE SELL: {{ $('Your search').first().json.my_offer }}\n\nBUSINESS: {{ $json.business }} ({{ $json.rating }}★ from {{ $json.reviews }} Google reviews, {{ $json.address }})\nWEBSITE TITLE: {{ $json.title }}\nSIGNALS: {{ JSON.stringify($json.signals) }}\nWEBSITE TEXT:\n{{ $json.text }}\n\nReturn: one specific observation from their site or reviews, a first line (max 25 words, friendly, no flattery, no 'I hope this finds you well'), and a fit score 1-10 for how much they need what we sell.",
+        "hasOutputParser": true
+      },
+      "id": "90599a4a-d6ac-4151-a71d-8bac135882c1",
+      "name": "Claude writes first line",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-5-5",
+          "mode": "id"
+        },
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "id": "c42b33cc-4896-4cc0-8918-6f1adfa2b353",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"observation\": \"Booking is by phone only and the site says 'call during office hours'\",\n  \"first_line\": \"Saw your 4.8 stars on Google, but new patients can only book by phone during office hours.\",\n  \"fit_score\": 8\n}"
+      },
+      "id": "c9c40b6d-e5f9-442b-babe-3ce49cc72a1c",
+      "name": "Structured output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now.toFormat('dd LLL yyyy') }}",
+            "Business": "={{ $('Website notes').item.json.business }}",
+            "Website": "={{ $('Website notes').item.json.website }}",
+            "Rating": "={{ $('Website notes').item.json.rating }}",
+            "Reviews": "={{ $('Website notes').item.json.reviews }}",
+            "Address": "={{ $('Website notes').item.json.address }}",
+            "Maps link": "={{ $('Website notes').item.json.maps }}",
+            "Observation": "={{ $json.output.observation }}",
+            "First line": "={{ $json.output.first_line }}",
+            "Fit score": "={{ $json.output.fit_score }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Business",
+              "displayName": "Business",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Rating",
+              "displayName": "Rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reviews",
+              "displayName": "Reviews",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address",
+              "displayName": "Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Maps link",
+              "displayName": "Maps link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Observation",
+              "displayName": "Observation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "First line",
+              "displayName": "First line",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fit score",
+              "displayName": "Fit score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b5378945-45db-4f79-a869-32c6d31e6ca0",
+      "name": "Save to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1560,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every morning 8 AM": {
+      "main": [
+        [
+          {
+            "node": "Your search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Your search": {
+      "main": [
+        [
+          {
+            "node": "Google Maps search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Maps search": {
+      "main": [
+        [
+          {
+            "node": "One row per business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One row per business": {
+      "main": [
+        [
+          {
+            "node": "Check website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check website": {
+      "main": [
+        [
+          {
+            "node": "Website notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website notes": {
+      "main": [
+        [
+          {
+            "node": "Claude writes first line",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude writes first line": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Claude writes first line",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Claude writes first line",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

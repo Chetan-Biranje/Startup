@@ -1,0 +1,252 @@
+{
+  "name": "19 · Deadline Alert (Kaamchor AI · MAP 2.0 · Ops)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 19 · Due-Date Alert\nGST, ITR, TDS, advance tax: har client ko uski service ke hisaab se due date se 7, 3 aur 1 din pehle WhatsApp reminder. Koi deadline miss nahi.\n\n**Setup (10 min)**\n1. Google Sheets: **Google Sheets OAuth2** credential, paste your sheet URL in place of YOUR_GOOGLE_SHEET_URL.\n   Tab **Deadlines**: Filing, Due date, Applies to.\n   Tab **Clients**: Client, Phone, Services, Status.\n   Tab **Reminder log** (empty).\n2. WhatsApp nodes: **WhatsApp Business Cloud API** credential + your **Phone Number ID** (replace YOUR_PHONE_NUMBER_ID).\n\nCheck the official due dates each month – extensions happen. Edit ALERT_DAYS in the code node.",
+        "height": 540,
+        "width": 360,
+        "color": 5
+      },
+      "id": "0fa58980-2541-4ee2-8227-626535927085",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "d98ed338-e5d1-4950-af2f-4f8340e6bce8",
+      "name": "Daily 10 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Deadlines"
+        },
+        "options": {}
+      },
+      "id": "a5f8e1ff-bb7d-4b2a-88d0-d27246623d1a",
+      "name": "Deadlines",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        220,
+        -100
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Clients"
+        },
+        "options": {},
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "=active"
+            }
+          ]
+        }
+      },
+      "id": "de550f89-d657-4b4e-be06-19b32a42b276",
+      "name": "Active clients",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        220,
+        100
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "chooseBranchMode": "waitForAll",
+        "output": "empty"
+      },
+      "id": "db67c0c7-a534-4709-bd69-f86dcb27771a",
+      "name": "Wait for both",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deadlines tab: Filing (e.g. GSTR-3B), Due date (yyyy-mm-dd), Applies to (service tag, e.g. GST)\n// Clients tab: Client, Phone, Services (comma tags, e.g. GST, ITR, TDS), Status\nconst today = $now.setZone('Asia/Kolkata').startOf('day');\nconst ALERT_DAYS = [7, 3, 1];\nconst out = [];\nfor (const { json: d } of $('Deadlines').all()) {\n  if (!d['Due date']) continue;\n  const left = Math.round(DateTime.fromISO(d['Due date']).diff(today, 'days').days);\n  if (!ALERT_DAYS.includes(left)) continue;\n  for (const { json: cl } of $('Active clients').all()) {\n    const tags = String(cl.Services || '').split(',').map(s => s.trim());\n    if (!cl.Phone || !tags.includes(d['Applies to'])) continue;\n    out.push({ json: { Phone: cl.Phone, Client: cl.Client, Filing: d.Filing, Due: DateTime.fromISO(d['Due date']).toFormat('d LLL'), left,\n      msg: `⏰ ${cl.Client} ji, *${d.Filing}* ki last date *${DateTime.fromISO(d['Due date']).toFormat('d LLL')}* hai (${left} din baaki).\\n` +\n           (left === 1 ? 'Kal last date hai – late fee se bachne ke liye aaj hi documents bhej dijiye 🙏' : 'Documents jaldi bhej dijiye taaki time pe file ho jaye.') } });\n  }\n}\nreturn out;"
+      },
+      "id": "00ed548f-b10a-4f94-b48b-46a41613b355",
+      "name": "Who needs a reminder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $json.Phone }}",
+        "textBody": "={{ $json.msg }}\n– YOUR FIRM NAME",
+        "additionalFields": {}
+      },
+      "id": "0e5d589f-318e-4baa-bd14-8314fca3def0",
+      "name": "Send reminder",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Reminder log"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "6a74c7fc-8182-48a7-b818-8f04a71f9f40",
+      "name": "Log reminder",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1100,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 10 AM": {
+      "main": [
+        [
+          {
+            "node": "Deadlines",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Active clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deadlines": {
+      "main": [
+        [
+          {
+            "node": "Wait for both",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Active clients": {
+      "main": [
+        [
+          {
+            "node": "Wait for both",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Wait for both": {
+      "main": [
+        [
+          {
+            "node": "Who needs a reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Who needs a reminder": {
+      "main": [
+        [
+          {
+            "node": "Send reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send reminder": {
+      "main": [
+        [
+          {
+            "node": "Log reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {}
+}

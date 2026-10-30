@@ -1,0 +1,219 @@
+{
+  "name": "02 · WhatsApp Replier (Kaamchor AI · MAP 2.0 · Sales)",
+  "nodes": [
+    {
+      "id": "44301709-2c78-4b17-81c3-6a0cd72b94df",
+      "name": "Setup s1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -200
+      ],
+      "parameters": {
+        "content": "## 02 · WhatsApp lead auto-reply\nNew lead messages → Claude replies in 2 sec → lead saved to Google Sheet.\n\n**Setup (10 min)**\n1. WhatsApp Trigger + WhatsApp Send: add your **WhatsApp Business Cloud API** credential (Meta developer app).\n2. WhatsApp Send: paste your **Phone Number ID**.\n3. Claude: add your **Anthropic API key** credential.\n4. Sheets: make a sheet with a tab `Leads` and columns `name, phone, need, budget, reply, time`. Paste its ID.\n5. Edit the system prompt: your business name, services, prices.\n6. Activate.\n\n---\nPart of **MAP – 12 AI agents** (Kaamchor AI).",
+        "width": 420,
+        "height": 440,
+        "color": 4
+      }
+    },
+    {
+      "id": "57785d4c-0b11-4d73-bffa-06d875be8fed",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      }
+    },
+    {
+      "id": "f9ed35ac-4eee-4e8b-b154-1a7a8dbf173e",
+      "name": "Claude replies",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer {{ $json.contacts?.[0]?.profile?.name || 'unknown' }} ({{ $json.messages?.[0]?.from }}) wrote: {{ $json.messages?.[0]?.text?.body }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the WhatsApp assistant of YOUR BUSINESS NAME. Reply in the customer's language (Hinglish is fine), max 3 short lines, warm and helpful. Answer the question if you can, then ask ONE qualifying question (what they need / budget / area). Never invent prices you were not given. Return ONLY JSON: {\"reply\": \"...\", \"name\": \"...\", \"phone\": \"...\", \"need\": \"...\", \"budget\": \"...\"}"
+        }
+      }
+    },
+    {
+      "id": "aa356acc-21c8-4040-86cc-db3b7bd8835c",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        260,
+        220
+      ],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-5-5"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "da117fc0-a7dc-4764-ae10-181cb20d0de2",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nconst m = raw.match(/\\{[\\s\\S]*\\}/);\nreturn { json: m ? JSON.parse(m[0]) : { error: 'no JSON', raw } };"
+      }
+    },
+    {
+      "id": "92e8a5ec-1b50-467a-85ab-af909e11c79c",
+      "name": "WhatsApp Send",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "textBody": "={{ $json.reply }}",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "6d87187a-82bc-4cf2-99ba-e9dc8d983144",
+      "name": "Lead fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ JSON.stringify({ name: $('Parse JSON').item.json.name, phone: $('WhatsApp Trigger').item.json.messages[0].from, need: $('Parse JSON').item.json.need, budget: $('Parse JSON').item.json.budget, reply: $('Parse JSON').item.json.reply, time: $now.toISO() }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "633af3fc-e601-4228-ae95-a4f785f6a2e8",
+      "name": "Sheets Append",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1300,
+        0
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Claude replies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude replies": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Send": {
+      "main": [
+        [
+          {
+            "node": "Lead fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead fields": {
+      "main": [
+        [
+          {
+            "node": "Sheets Append",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Claude replies",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
