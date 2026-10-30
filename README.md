@@ -1,7 +1,5 @@
 # MAP 2.0: 20 AI employees, ₹0 salary
 
-**Setup mein help chahiye? Free call book karo:** https://calendar.google.com/calendar/appointments/schedules/AcZssZ2ZI6Dqh2h1_ZDYvYyeQvzmzxSRp9yCcr0mHPj0WDpbplw-pbnv-e_5B6NI8tjpjhDK8GYfs2ol
-
 20 ready-to-import n8n workflows, organised like a company with 5 departments (4 agents each).
 Each one uses Claude (Anthropic) as its brain. Every workflow has a yellow sticky note on the canvas with its own setup steps.
 
@@ -68,7 +66,5 @@ Each one uses Claude (Anthropic) as its brain. Every workflow has a yellow stick
 - Start with one agent. Easiest first: **13 Bill Reader** (Gmail + Sheets + Claude).
 - Point anything that sends messages at your own number or a draft until you trust it.
 - Model: Claude nodes use `claude-sonnet-5-5`; switch in the Claude node if you like.
-
-> **Setup mein help chahiye? Free call book karo:** https://calendar.google.com/calendar/appointments/schedules/AcZssZ2ZI6Dqh2h1_ZDYvYyeQvzmzxSRp9yCcr0mHPj0WDpbplw-pbnv-e_5B6NI8tjpjhDK8GYfs2ol
 
 Free from **Kaamchor AI**.
