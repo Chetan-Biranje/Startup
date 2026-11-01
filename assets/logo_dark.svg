@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="cyberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F2FE" />
+      <stop offset="50%" stop-color="#4FACFE" />
+      <stop offset="100%" stop-color="#7F00FF" />
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="100%" height="100%" fill="#0B0F19" rx="20"/>
+
+  <!-- Logo Mark (Shield + Neural AI Core + Energy Arrow) -->
+  <g transform="translate(60, 40)">
+    <!-- Outer Shield Border with Glow -->
+    <path d="M 80 10 
+             L 140 30 
+             L 140 95 
+             C 140 135, 80 155, 80 155 
+             C 80 155, 20 135, 20 95 
+             L 20 30 Z" 
+          fill="url(#shieldGrad)" 
+          stroke="url(#cyberGrad)" 
+          stroke-width="4" 
+          filter="url(#glow)"/>
+
+    <!-- Neural Inner Hexagon / AI Core -->
+    <polygon points="80,45 105,60 105,90 80,105 55,90 55,60" 
+             fill="none" 
+             stroke="#00F2FE" 
+             stroke-width="3" />
+
+    <!-- Center Quantum Core Point -->
+    <circle cx="80" cy="75" r="7" fill="#00F2FE" filter="url(#glow)"/>
+
+    <!-- Dynamic Upward Sovereign Rays -->
+    <line x1="80" y1="45" x2="80" y2="20" stroke="#00F2FE" stroke-width="3" stroke-linecap="round"/>
+    <line x1="55" y1="60" x2="35" y2="45" stroke="#4FACFE" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="105" y1="60" x2="125" y2="45" stroke="#4FACFE" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="55" y1="90" x2="40" y2="105" stroke="#7F00FF" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="105" y1="90" x2="120" y2="105" stroke="#7F00FF" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="80" y1="105" x2="80" y2="135" stroke="#7F00FF" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Typography Brand Name -->
+  <g transform="translate(240, 115)">
+    <!-- Primary Company Name -->
+    <text font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" 
+          font-size="64" 
+          font-weight="900" 
+          letter-spacing="1.5" 
+          fill="#FFFFFF">
+      TITAN<tspan fill="url(#cyberGrad)">CORE</tspan>
+    </text>
+
+    <!-- Subtitle / Category Descriptor -->
+    <text y="42" 
+          font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" 
+          font-size="16" 
+          font-weight="600" 
+          letter-spacing="6" 
+          fill="#94A3B8">
+      AUTONOMOUS IT • AI • CYBERSECURITY
+    </text>
+  </g>
+</svg>

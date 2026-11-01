@@ -17,6 +17,7 @@ c:\Users\Mr Shadex\Startup\
 │   ├── API.md                                       [REST, GraphQL, Webhook Schemas, Rate Limits & Errors]
 │   ├── ARCHITECTURE.md                              [End-to-End System Architecture, Topology & Mermaid Maps]
 │   ├── auth.md                                      [JWT Lifecycle, API Keys, RBAC Matrix & HMAC Security]
+│   ├── BRANDING_AND_LAUNCH_KIT.md                   [Complete Brand Names, Vector SVG Logos, Legal MSAs & Pitch Deck]
 │   ├── COMPANY_PLAYBOOK.md                          [Master Founder Blueprint: How to Start, Run & Scale from Day 0]
 │   ├── DATABASE.md                                  [PostgreSQL 16 Schema, Redis Cache Keys & Data Bus]
 │   ├── debugging.md                                 [Diagnostics, Sentry Trap, DLQ & LLM Fallback Policies]
@@ -391,6 +392,7 @@ All files can be accessed directly using standard file links:
 | **Master Engine** | [`100_tech_startup_autonomous_master_workflow.json`](file:///c:/Users/Mr%20Shadex/Startup/100_tech_startup_autonomous_master_workflow.json) | End-to-end autonomous tech startup engine. |
 | **API Contract** | [`API.md`](file:///c:/Users/Mr%20Shadex/Startup/API.md) | Complete endpoints, webhooks, and rate limits. |
 | **Authentication** | [`auth.md`](file:///c:/Users/Mr%20Shadex/Startup/auth.md) | JWT tokens, API keys, RBAC, and HMAC security. |
+| **Brand & Launch Kit** | [`BRANDING_AND_LAUNCH_KIT.md`](file:///c:/Users/Mr%20Shadex/Startup/BRANDING_AND_LAUNCH_KIT.md) | Company names, vector SVG logos, legal MSAs & pitch deck. |
 | **Founder Playbook** | [`COMPANY_PLAYBOOK.md`](file:///c:/Users/Mr%20Shadex/Startup/COMPANY_PLAYBOOK.md) | A-to-Z Founder Blueprint: legal, tech, business model & scaling. |
 | **Diagnostics** | [`debugging.md`](file:///c:/Users/Mr%20Shadex/Startup/debugging.md) | Failure triage, dead-letter queues, and LLM fallbacks. |
 | **System Design** | [`DESIGN.md`](file:///c:/Users/Mr%20Shadex/Startup/DESIGN.md) | Architecture topology, design tokens, and scalability. |
