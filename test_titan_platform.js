@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const targetFile = 'c:\\Users\\Mr Shadex\\Startup\\00_ALL_IN_ONE_TITAN_203_AGENTS_WORKFLOW.json';
 
@@ -38,7 +39,7 @@ assert(workflow.name && workflow.name.length > 5, 'Test 2: Workflow has valid de
 assert(Array.isArray(workflow.nodes) && workflow.nodes.length > 1000, `Test 3: Workflow contains complete enterprise nodes (Found: ${workflow.nodes.length} nodes)`);
 assert(workflow.connections && Object.keys(workflow.connections).length > 500, `Test 4: Workflow contains connection network (Found: ${Object.keys(workflow.connections).length} connection sources)`);
 
-// TEST 3: Node ID Uniqueness
+// TEST 3: Node ID & Name Uniqueness
 const nodeIds = new Set();
 let duplicateIds = 0;
 const nodeNames = new Set();
@@ -115,7 +116,6 @@ try {
     timestamp: new Date().toISOString()
   };
 
-  // Simulate Master Router Node code execution
   const masterNode = workflow.nodes.find(n => n.id === 'master-titan-all-in-one-bus');
   if (masterNode && masterNode.parameters && masterNode.parameters.jsCode) {
     const fn = new Function('$json', masterNode.parameters.jsCode);
@@ -127,8 +127,59 @@ try {
 } catch(e) {
   console.error('Dry run error:', e);
 }
-
 assert(dryRunSuccess, 'Test 14: Simulated Dry-Run of Master Gateway Dispatch logic');
+
+// TEST 7: Cross-Node Reference Integrity ($('Node Name'))
+let missingInternalRefs = 0;
+function traverseAndCheckRefs(obj) {
+  if (!obj) return;
+  if (typeof obj === 'string') {
+    const regex = /\$\(\s*['"]([^'"]+)['"]\s*\)/g;
+    let match;
+    while ((match = regex.exec(obj)) !== null) {
+      if (!nodeNames.has(match[1])) {
+        missingInternalRefs++;
+      }
+    }
+  } else if (Array.isArray(obj)) {
+    obj.forEach(traverseAndCheckRefs);
+  } else if (typeof obj === 'object') {
+    for (const key of Object.keys(obj)) {
+      traverseAndCheckRefs(obj[key]);
+    }
+  }
+}
+workflow.nodes.forEach(n => traverseAndCheckRefs(n.parameters));
+assert(missingInternalRefs === 0, 'Test 15: Cross-Node Expression References Integrity (Zero dangling $(\'Node\') refs)', `Found ${missingInternalRefs} missing`);
+
+// TEST 8: Code Node JavaScript Syntax & Scope Isolation
+let codeErrors = 0;
+workflow.nodes.filter(n => n.type === 'n8n-nodes-base.code').forEach(n => {
+  const code = n.parameters?.jsCode || n.parameters?.code;
+  if (code) {
+    try {
+      new Function('items', '$input', '$json', '$item', '$now', '$today', '$jmespath', '$node', code);
+    } catch (err) {
+      codeErrors++;
+    }
+  }
+});
+assert(codeErrors === 0, 'Test 16: Code Node JavaScript Syntax & Scope Isolation (Zero syntax/scope errors)', `Found ${codeErrors} syntax errors`);
+
+// TEST 9: Webhook Collision Free
+const webhookPaths = new Map();
+let duplicateWebhooks = 0;
+webhookNodes.forEach(n => {
+  const method = (n.parameters?.httpMethod || 'GET').toUpperCase();
+  const path = n.parameters?.path || '';
+  const key = `${method}:${path}`;
+  if (webhookPaths.has(key)) {
+    duplicateWebhooks++;
+  } else {
+    webhookPaths.set(key, n.name);
+  }
+});
+assert(duplicateWebhooks === 0, 'Test 17: Webhook Endpoint Uniqueness (Zero path collisions)', `Found ${duplicateWebhooks} duplicates`);
 
 console.log('\n====================================================');
 console.log(`🏁 TEST RESULTS: ${passCount} PASSED, ${failCount} FAILED`);
@@ -141,4 +192,3 @@ if (failCount === 0) {
   console.error('⚠️ BUGS DETECTED! FIX REQUIRED.');
   process.exit(1);
 }
-

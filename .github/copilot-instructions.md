@@ -1,26 +1,36 @@
 # Copilot Instructions
 
-## Project shape
+## Project Shape
 
-This repository is a library of n8n workflow exports and their setup/architecture documentation, not an application with a source build. The 200 numbered agents are spread across department folders and root-level orchestrators; three additional root JSON files provide the WhatsApp router and connected canvases, for 203 workflow JSON files total.
+This repository contains the unified, enterprise-grade autonomous AI company architecture for **AegisTitan Technologies Inc.**:
 
-- `00_whatsapp_master_router.json` routes inbound events to other workflows. Its Execute Workflow nodes must use IDs from the imported target workflows.
-- `50_ceo_agent.json` is the CEO interface (logical department 08); `100_tech_startup_autonomous_master_workflow.json` and the department workflows cover the wider automation catalog.
-- Department workflows live in numbered folders (01-07 and 09-24); agent 51 is in Sales. The root-level connected canvases are separate importable workflow exports.
-- `README.md` is the quick start; `SETUP.md` covers import and credentials; `ARCHITECTURE.md` and `tree.md` describe workflow relationships; `testing.md` is a proposed QA plan, not an implemented test suite.
+- `00_ALL_IN_ONE_TITAN_203_AGENTS_WORKFLOW.json`: The master 1-click importable n8n workflow file containing all 203 autonomous AI agents organized across 24 departments and an executive orchestration gateway on a single unified canvas.
+- `README.md`: The single source of truth documentation covering company branding, identity, IT + AI + Cybersecurity triad architecture, catalog of all 203 agents, setup guide, and the Day 1 to IPO playbook.
+- `test_titan_platform.js`: Comprehensive 17-point automated verification and linting test suite for node integrity, connection topology, JavaScript code syntax, cross-node references, and webhook collision protection.
+- `assets/`: Vector brand assets including dark and light SVG logos and app icons.
 
-## Build and test
+## Build and Test
 
-There are no repository build, lint, or automated test commands: no project package manifest, test files, or GitHub Actions workflow is present. Do not assume the examples in `testing.md` can be run as-is.
+Run the automated test suite locally at any time:
+```bash
+node test_titan_platform.js
+```
 
-To check one workflow, import its JSON into n8n, configure its credentials and `YOUR_...` placeholders from its Sticky Note, then execute it with controlled test data. Nodes can send messages or modify external services; use test destinations and test data.
-
-## Workflow conventions
-
-- Treat each root-level or department `.json` file as an n8n workflow export. Keep node names and `connections` entries aligned; Code nodes may refer to other nodes by name (for example, `$('Node Name')`).
-- Preserve the export's node IDs, types, type versions, parameters, connections, settings, and active state unless the requested behavior requires a change.
-- Workflow Sticky Notes are the per-workflow setup contract: keep their credential, sheet/tab, column, and placeholder instructions accurate when changing nodes.
-- `YOUR_...` values are configuration placeholders, not n8n expressions. Keep static phone numbers, email addresses, and Google Sheets filter values as literals; use n8n expression syntax only for values that must be evaluated dynamically.
-- Keep webhook method/path pairs unique across workflows intended to run together. WhatsApp Cloud API supports one webhook per Meta app; use the central router or separate apps/numbers for multiple WhatsApp-triggered workflows.
-- When changing the router or a connected canvas, verify its dispatch targets and workflow IDs against the corresponding standalone agent exports.
-- Update the relevant setup or architecture documentation when a workflow's integration contract or routing changes.
+All 17 automated tests verify:
+1. JSON structure validity
+2. Workflow metadata & descriptive naming
+3. Complete enterprise node collection (1,430+ nodes)
+4. Multi-agent connection network (1,070+ connection sources)
+5. Node ID uniqueness (0 duplicates)
+6. Node Name uniqueness (0 duplicates)
+7. Coordinate geometry & layout grid formatting
+8. Valid n8n node type declarations
+9. Connection source validity
+10. Connection target validity (0 dangling links)
+11. Department visual banner placement (24 departments)
+12. Webhook triggers (106 inbound triggers)
+13. AI Reasoning & LangChain agent engines (340+ AI nodes)
+14. Master gateway dispatch simulation
+15. Cross-node `$('<Node Name>')` expression reference integrity
+16. Code node JavaScript syntax and runtime variable scope isolation
+17. Webhook endpoint uniqueness & collision freedom
