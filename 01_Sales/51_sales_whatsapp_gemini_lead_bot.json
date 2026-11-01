@@ -1,0 +1,320 @@
+{
+  "name": "51 🔥 WhatsApp AI Lead Bot (Google Gemini 1.5 Flash)",
+  "nodes": [
+    {
+      "id": "e1f10001-0001-4000-8000-000000000001",
+      "name": "Setup Instructions (मार्गदर्शन)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -580,
+        -120
+      ],
+      "parameters": {
+        "content": "## 51 🚀 WhatsApp AI Auto-Reply & Lead Qualifier (Gemini 1.5 Flash)\n\nनवीन WhatsApp मेसेज आल्यावर Google Gemini AI लगेच उत्तर देईल, लीडचा हेतू (Hot/Warm/Cold) ओळखेल आणि Google Sheets मध्ये सेव्ह करेल.\n\n### ⚡ Setup Steps (फक्त ५ मिनिटे):\n1. **WhatsApp Trigger & Send:**\n   - Meta Developers मधून **WhatsApp Cloud API** क्रेडेंशियल जोडा.\n   - `Phone Number ID` आणि `Recipient Phone Number` कन्फर्म करा.\n2. **Google Gemini:**\n   - [Google AI Studio](https://aistudio.google.com/) वरून मोफत **Gemini API Key** मिळवा.\n   - Gemini नोडमध्ये `Google Gemini(PaLM) Api` क्रेडेंशियल म्हणून पेस्ट करा.\n3. **Google Sheets:**\n   - गुगल शीट तयार करा. टॅबचे नाव `Leads` ठेवा.\n   - Columns: `Timestamp`, `Name`, `Phone`, `Customer_Message`, `AI_Reply`, `Need`, `Intent`, `Summary`.\n   - `Sheets Append Lead` नोडमध्ये शीट सिलेक्ट करा.\n4. **Business Information:**\n   - `Gemini AI Agent` नोडमधील `System Message` मध्ये तुमच्या व्यवसायाचे नाव, उत्पादने आणि दर टाका.\n5. **Active करा:**\n   - चाचणी करा आणि वरील **Active** टॉगल चालू करा!\n\n---\n*Created for Antigravity & MAP 3.0 Automation*",
+        "width": 520,
+        "height": 580,
+        "color": 4
+      }
+    },
+    {
+      "id": "e1f10002-0002-4000-8000-000000000002",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "updates": [
+          "messages"
+        ]
+      }
+    },
+    {
+      "id": "e1f10003-0003-4000-8000-000000000003",
+      "name": "Filter Inbound Text",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.messages?.[0]?.type }}",
+              "rightValue": "text",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "e1f10004-0004-4000-8000-000000000004",
+      "name": "Gemini AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        500,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer Name: {{ $('WhatsApp Trigger').item.json.contacts?.[0]?.profile?.name || 'Customer' }}\nPhone: {{ $('WhatsApp Trigger').item.json.messages?.[0]?.from }}\nMessage: {{ $('WhatsApp Trigger').item.json.messages?.[0]?.text?.body }}",
+        "hasOutputParser": false,
+        "options": {
+          "systemMessage": "You are the AI Business Assistant for [YOUR BUSINESS NAME].\n\nYour Goals:\n1. Reply warmly and politely in the customer's language (Marathi / Hindi / Hinglish / English).\n2. Keep your answer brief (maximum 2-3 sentences), helpful, and professional.\n3. Answer their question directly based on your business offerings.\n4. Ask ONE gentle qualifying question (e.g. what specific service they need, timeline, or suggest booking a quick call).\n5. Classify the customer's buying intent as 'Hot' (ready to purchase, urgent inquiry, asking for payment/call), 'Warm' (interested, asking details/pricing), or 'Cold' (just casual hi/hello or spam).\n\nIMPORTANT: Return ONLY a raw JSON object (no markdown quotes, no extra text) with this exact schema:\n{\n  \"reply\": \"<Your polite response to the customer>\",\n  \"name\": \"<Customer Name>\",\n  \"need\": \"<What they are asking for>\",\n  \"intent\": \"Hot\" | \"Warm\" | \"Cold\",\n  \"summary\": \"<Short 1-line summary for sales team>\"\n}"
+        }
+      }
+    },
+    {
+      "id": "e1f10005-0005-4000-8000-000000000005",
+      "name": "Google Gemini 1.5 Flash",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        500,
+        220
+      ],
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {
+          "temperature": 0.7
+        }
+      }
+    },
+    {
+      "id": "e1f10006-0006-4000-8000-000000000006",
+      "name": "Parse JSON Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || '';\nlet parsed = {};\ntry {\n  const jsonMatch = raw.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    parsed = JSON.parse(jsonMatch[0]);\n  } else {\n    parsed = { reply: raw, intent: 'Warm', need: 'General Inquiry', summary: raw.slice(0, 100) };\n  }\n} catch (err) {\n  parsed = { reply: raw, intent: 'Warm', need: 'General Inquiry', summary: 'Parse fallback' };\n}\n\nconst trigger = $('WhatsApp Trigger').item.json;\nconst phone = trigger.messages?.[0]?.from || '';\nconst originalMsg = trigger.messages?.[0]?.text?.body || '';\nconst profileName = trigger.contacts?.[0]?.profile?.name || parsed.name || 'Valued Customer';\n\nreturn {\n  json: {\n    reply: parsed.reply || 'नमस्कार! तुमचा संदेश मिळाला आहे. आम्ही लवकरच तुमच्याशी संपर्क साधू.',\n    name: profileName,\n    phone: phone,\n    customer_message: originalMsg,\n    need: parsed.need || 'N/A',\n    intent: parsed.intent || 'Warm',\n    summary: parsed.summary || originalMsg,\n    timestamp: new Date().toISOString()\n  }\n};"
+      }
+    },
+    {
+      "id": "e1f10007-0007-4000-8000-000000000007",
+      "name": "WhatsApp Send Reply",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        0
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "={{ $json.phone }}",
+        "textBody": "={{ $json.reply }}",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "e1f10008-0008-4000-8000-000000000008",
+      "name": "Is Hot Lead?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c_intent",
+              "leftValue": "={{ $json.intent }}",
+              "rightValue": "Hot",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "e1f10009-0009-4000-8000-000000000009",
+      "name": "Hot Lead Alert to Owner",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        -100
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP_NUMBER",
+        "textBody": "=🔥 *HOT LEAD ALERT!* 🔥\n\n👤 *नाव:* {{ $json.name }}\n📱 *फोन:* {{ $json.phone }}\n🎯 *गरज:* {{ $json.need }}\n📝 *मेसेज:* {{ $json.customer_message }}\n💡 *AI सारांश:* {{ $json.summary }}\n\nलगेच संपर्क करा आणि डील क्लोज करा!",
+        "additionalFields": {}
+      }
+    },
+    {
+      "id": "e1f10010-0010-4000-8000-000000000010",
+      "name": "Sheets Append Lead",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1820,
+        0
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $json.timestamp }}",
+            "Name": "={{ $json.name }}",
+            "Phone": "={{ $json.phone }}",
+            "Customer_Message": "={{ $json.customer_message }}",
+            "AI_Reply": "={{ $json.reply }}",
+            "Need": "={{ $json.need }}",
+            "Intent": "={{ $json.intent }}",
+            "Summary": "={{ $json.summary }}"
+          }
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter Inbound Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Inbound Text": {
+      "main": [
+        [
+          {
+            "node": "Gemini AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini 1.5 Flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON Output": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Send Reply": {
+      "main": [
+        [
+          {
+            "node": "Is Hot Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Hot Lead?": {
+      "main": [
+        [
+          {
+            "node": "Hot Lead Alert to Owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheets Append Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot Lead Alert to Owner": {
+      "main": [
+        [
+          {
+            "node": "Sheets Append Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

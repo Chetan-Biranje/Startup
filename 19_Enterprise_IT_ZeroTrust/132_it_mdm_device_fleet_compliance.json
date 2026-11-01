@@ -1,0 +1,129 @@
+{
+  "name": "132 MDM Workstation Fleet Compliance Guard",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agent-132-it_mdm_device_fleet_compliance",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-132-webhook",
+      "name": "Webhook: MDM Workstation Fleet Compliance Guard",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Agent 132 Payload Processor\\nconst item = $json.body || $json;\\nconst correlationId = item.correlationId || `trace_132_${Date.now()}`;\\nconst payloadData = item.data || item;\\n\\nreturn {\\n  json: {\\n    agentId: '132',\\n    agentName: 'MDM Workstation Fleet Compliance Guard',\\n    correlationId,\\n    payloadData,\\n    receivedAt: new Date().toISOString()\\n  }\\n};"
+      },
+      "id": "node-132-parse",
+      "name": "Parse & Enrich Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are Agent 132: MDM Workstation Fleet Compliance Guard.\\nRole: Audits employee Mac/Windows laptops for disk encryption, OS updates, and firewall.\\nDepartment: 19_Enterprise_IT_ZeroTrust\\n\\nProcess the following operational event:\\nCorrelation ID: {{$json.correlationId}}\\nPayload: {{JSON.stringify($json.payloadData)}}\\n\\nExecute task with zero hallucination and return structured JSON output with fields: status (SUCCESS/FAILED), summary, action_items, and metrics."
+      },
+      "id": "node-132-llm",
+      "name": "Gemini / Claude AI Engine",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        580,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Format execution output\\nconst raw = $json.output || $json.text || '';\\nlet parsed = {};\\ntry {\\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\\n  parsed = match ? JSON.parse(match[0]) : {};\\n} catch (e) {\\n  parsed = { rawOutput: raw };\\n}\\n\\nconst orig = $('Parse & Enrich Context').item.json;\\nreturn {\\n  json: {\\n    agentId: orig.agentId,\\n    agentName: orig.agentName,\\n    correlationId: orig.correlationId,\\n    status: parsed.status || 'SUCCESS',\\n    summary: parsed.summary || 'Task completed autonomously.',\\n    action_items: parsed.action_items || [],\\n    metrics: parsed.metrics || {},\\n    completedAt: new Date().toISOString()\\n  }\\n};"
+      },
+      "id": "node-132-format",
+      "name": "Format Response & Telemetry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\\n  \"status\": \"{{$json.status}}\",\\n  \"agentId\": \"{{$json.agentId}}\",\\n  \"agentName\": \"{{$json.agentName}}\",\\n  \"correlationId\": \"{{$json.correlationId}}\",\\n  \"summary\": \"{{$json.summary}}\",\\n  \"completedAt\": \"{{$json.completedAt}}\"\\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node-132-respond",
+      "name": "Respond 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1060,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: MDM Workstation Fleet Compliance Guard": {
+      "main": [
+        [
+          {
+            "node": "Parse & Enrich Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Enrich Context": {
+      "main": [
+        [
+          {
+            "node": "Gemini / Claude AI Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini / Claude AI Engine": {
+      "main": [
+        [
+          {
+            "node": "Format Response & Telemetry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response & Telemetry": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

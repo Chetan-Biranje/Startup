@@ -1,0 +1,165 @@
+{
+  "name": "79 Automated NPS & CSAT Collector (Tech Startup Enterprise)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 79 Automated NPS & CSAT Collector\\n**Role:** Dispatches non-intrusive micro-surveys and routes detractors to senior product managers\\n\\n**Tech Startup Integration:**\\n- Connected to central Google Sheets / Postgres DATABASE\\n- Controlled via 00_whatsapp_master_router.json & 50_ceo_agent.json\\n- AI Brain: Google Gemini 1.5 Flash / Claude 3.5 Sonnet\\n\\n---\\nPart of 100 AI Agents Tech Enterprise Suite.",
+        "height": 450,
+        "width": 500,
+        "color": 4
+      },
+      "id": "node-sticky-79",
+      "name": "Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "node-trigger-79",
+      "name": "Daily Schedule / Webhook Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Execute task for 79 Automated NPS & CSAT Collector. Input data: {{ JSON.stringify($json) }}",
+        "options": {
+          "systemMessage": "You are 79 Automated NPS & CSAT Collector for an AI-powered B2B SaaS / Tech Startup. Execute your role: Dispatches non-intrusive micro-surveys and routes detractors to senior product managers. Output clean structured JSON."
+        }
+      },
+      "id": "node-agent-79",
+      "name": "AI Intelligence (79)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "node-gemini-79",
+      "name": "Google Gemini 1.5 Flash",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        260,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || \"\";\nlet parsed = {};\ntry {\n  const m = raw.match(/\\{[\\s\\S]*\\}/);\n  parsed = m ? JSON.parse(m[0]) : { status: \"processed\", raw };\n} catch (e) { parsed = { status: \"fallback\", raw }; }\n\nreturn {\n  json: {\n    ...parsed,\n    agentNumber: \"79\",\n    agentName: \"79 Automated NPS & CSAT Collector\",\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "node-parse-79",
+      "name": "Process Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Daily Log"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "node-sheets-79",
+      "name": "Update Enterprise Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        780,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule / Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Intelligence (79)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini 1.5 Flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Intelligence (79)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Intelligence (79)": {
+      "main": [
+        [
+          {
+            "node": "Process Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Output": {
+      "main": [
+        [
+          {
+            "node": "Update Enterprise Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

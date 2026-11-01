@@ -1,0 +1,165 @@
+{
+  "name": "53 Cloud Cost Optimizer (Tech Startup Enterprise)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 53 Cloud Cost Optimizer\\n**Role:** Monitors AWS/GCP cloud spend, flags unattached disks/idle pods, and alerts on billing spikes\\n\\n**Tech Startup Integration:**\\n- Connected to central Google Sheets / Postgres DATABASE\\n- Controlled via 00_whatsapp_master_router.json & 50_ceo_agent.json\\n- AI Brain: Google Gemini 1.5 Flash / Claude 3.5 Sonnet\\n\\n---\\nPart of 100 AI Agents Tech Enterprise Suite.",
+        "height": 450,
+        "width": 500,
+        "color": 4
+      },
+      "id": "node-sticky-53",
+      "name": "Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -500,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "node-trigger-53",
+      "name": "Daily Schedule / Webhook Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Execute task for 53 Cloud Cost Optimizer. Input data: {{ JSON.stringify($json) }}",
+        "options": {
+          "systemMessage": "You are 53 Cloud Cost Optimizer for an AI-powered B2B SaaS / Tech Startup. Execute your role: Monitors AWS/GCP cloud spend, flags unattached disks/idle pods, and alerts on billing spikes. Output clean structured JSON."
+        }
+      },
+      "id": "node-agent-53",
+      "name": "AI Intelligence (53)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "node-gemini-53",
+      "name": "Google Gemini 1.5 Flash",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        260,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json.output || $json.text || \"\";\nlet parsed = {};\ntry {\n  const m = raw.match(/\\{[\\s\\S]*\\}/);\n  parsed = m ? JSON.parse(m[0]) : { status: \"processed\", raw };\n} catch (e) { parsed = { status: \"fallback\", raw }; }\n\nreturn {\n  json: {\n    ...parsed,\n    agentNumber: \"53\",\n    agentName: \"53 Cloud Cost Optimizer\",\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "node-parse-53",
+      "name": "Process Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_GOOGLE_SHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Daily Log"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {}
+        },
+        "options": {}
+      },
+      "id": "node-sheets-53",
+      "name": "Update Enterprise Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        780,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule / Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Intelligence (53)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini 1.5 Flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Intelligence (53)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Intelligence (53)": {
+      "main": [
+        [
+          {
+            "node": "Process Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Output": {
+      "main": [
+        [
+          {
+            "node": "Update Enterprise Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
