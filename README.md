@@ -168,6 +168,5 @@ Each one uses Claude (Anthropic) as its brain. Every workflow has a yellow stick
 - Point anything that sends messages at your own number or a draft until you trust it. Angry customers, refunds and discounts always come to you; the AI never promises them.
 - Model: Claude nodes use `claude-sonnet-5-5`; switch in the model node if you like (OpenAI / Gemini work too).
 
-> **Complete setup chahiye? Hum aapke business ke liye poora setup kar denge. Free call book karo:** https://calendar.google.com/calendar/appointments/schedules/AcZssZ2ZI6Dqh2h1_ZDYvYyeQvzmzxSRp9yCcr0mHPj0WDpbplw-pbnv-e_5B6NI8tjpjhDK8GYfs2ol
 
 Free from **Kaamchor AI**.
