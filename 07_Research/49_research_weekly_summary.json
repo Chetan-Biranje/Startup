@@ -215,7 +215,7 @@
     },
     {
       "parameters": {
-        "sendTo": "=YOUR_OWNER_EMAIL",
+        "sendTo": "YOUR_OWNER_EMAIL",
         "subject": "=Weekly summary: {{ $('This week\\'s numbers').item.json.week }}",
         "emailType": "text",
         "message": "={{ $json.text }}",
@@ -237,7 +237,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "={{ $json.text }}",
         "additionalFields": {}
       },

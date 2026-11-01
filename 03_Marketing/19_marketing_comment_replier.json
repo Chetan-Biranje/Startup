@@ -163,7 +163,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "=💬 {{ $('Read comment').item.json.platform }} comment needs you ({{ $json.output.type }}):\n{{ $('Read comment').item.json.from }}: \"{{ $('Read comment').item.json.text }}\"\nNot replied automatically.",
         "additionalFields": {}
       },

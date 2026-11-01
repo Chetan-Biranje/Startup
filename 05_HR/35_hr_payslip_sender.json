@@ -306,7 +306,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "=⚠️ Payslips for {{ $('Totals + checks').item.json.month }} were NOT sent.\n{{ $json.output.summary }}\n{{ $json.output.issues.join('\\n') }}\nFix the Payroll sheet and run the workflow again.",
         "additionalFields": {}
       },

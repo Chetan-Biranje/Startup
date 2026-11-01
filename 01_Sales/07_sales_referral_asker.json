@@ -255,7 +255,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "=👎 {{ $json.output.owner_summary }}\nCustomer: {{ $('Read rating').item.json.name }} · {{ $('Read rating').item.json.phone }} (private, please call)",
         "additionalFields": {}
       },
@@ -291,7 +291,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "=📩 Message from customer {{ $json.name }} · {{ $json.phone }}:\n\"{{ $json.text }}\"\n(referral? call the friend today)",
         "additionalFields": {}
       },

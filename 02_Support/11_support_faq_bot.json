@@ -166,7 +166,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OFFICE_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OFFICE_WHATSAPP",
         "textBody": "=🔔 Client question needs a human:\nFrom: {{ $('WhatsApp Trigger').item.json.messages[0].from }}\n\"{{ $('WhatsApp Trigger').item.json.messages[0].text.body }}\"",
         "additionalFields": {}
       },

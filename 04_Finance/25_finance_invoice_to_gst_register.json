@@ -193,7 +193,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_CA_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_CA_WHATSAPP",
         "textBody": "=⚠️ {{ $('GSTIN + maths check').item.json.Client }} – invoice {{ $('GSTIN + maths check').item.json['Invoice no'] }} ({{ $('GSTIN + maths check').item.json.Supplier }}): {{ $('GSTIN + maths check').item.json.Check }}. Please check before ITC claim.",
         "additionalFields": {}
       },

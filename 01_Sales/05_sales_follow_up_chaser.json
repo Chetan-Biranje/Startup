@@ -54,7 +54,7 @@
           "values": [
             {
               "lookupColumn": "Status",
-              "lookupValue": "=open"
+              "lookupValue": "open"
             }
           ]
         }
@@ -296,7 +296,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "=🔥 Follow-up reply: {{ $('Lead replies').item.json.contacts?.[0]?.profile?.name || '' }} · {{ $('Lead replies').item.json.messages[0].from }}\n{{ $('AI reads interest').item.json.output.interest.toUpperCase() }}: {{ $('AI reads interest').item.json.output.summary }}\nCall now",
         "additionalFields": {}
       },

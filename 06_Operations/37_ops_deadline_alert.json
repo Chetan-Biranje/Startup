@@ -78,7 +78,7 @@
           "values": [
             {
               "lookupColumn": "Status",
-              "lookupValue": "=active"
+              "lookupValue": "active"
             }
           ]
         }

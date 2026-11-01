@@ -251,7 +251,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "=📉 Price drop: *{{ $('Parse ₹ + compare').item.json.Product }}*\n₹{{ $('Parse ₹ + compare').item.json.last }} → ₹{{ $('Parse ₹ + compare').item.json.price }}{{ $('Parse ₹ + compare').item.json.hit_target ? ' (below your target!)' : '' }}\n{{ $('Parse ₹ + compare').item.json.URL }}",
         "additionalFields": {}
       },

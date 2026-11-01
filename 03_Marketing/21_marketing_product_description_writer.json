@@ -54,7 +54,7 @@
           "values": [
             {
               "lookupColumn": "Status",
-              "lookupValue": "=new"
+              "lookupValue": "new"
             }
           ]
         }

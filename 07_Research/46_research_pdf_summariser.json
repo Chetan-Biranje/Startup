@@ -230,7 +230,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "={{ $('Summary row').item.json['Action needed'] === 'yes' ? '⚠️ Action needed' : '📄 FYI' }}: *{{ $('Summary row').item.json.File }}* ({{ $('Summary row').item.json.Source }})\n{{ $('Summary row').item.json.Summary }}",
         "additionalFields": {}
       },

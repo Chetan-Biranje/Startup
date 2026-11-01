@@ -2,6 +2,8 @@
 
 ## 1. Executive Master Directory Tree
 
+Department 08 (CEO) is a logical department represented by the root-level `50_ceo_agent.json`; it does not have a separate folder. The numbered department folders are 01-07 and 09-24.
+
 ```
 c:\Users\Mr Shadex\Startup\
 │
@@ -9,7 +11,7 @@ c:\Users\Mr Shadex\Startup\
 │   ├── 00_SUPREME_ENTERPRISE_TITAN_CONNECTED_CANVAS.json [Supreme Master Canvas: All 24 Departments & 200 Agents Wired]
 │   ├── 00_whatsapp_master_router.json               [Agent 00: Central Inbound Meta Cloud Router]
 │   ├── 00_BONUS_first_12_connected_one_canvas.json  [Agent 00: Visual Unified 12-Agent Canvas]
-│   ├── 50_ceo_agent.json                            [Agent 50: CEO Executive Assistant & Orchestrator]
+│   ├── 50_ceo_agent.json                            [Agent 50: 08_CEO Executive Assistant & Orchestrator]
 │   └── 100_tech_startup_autonomous_master_workflow.json [Agent 100: End-to-End Tech Startup Engine]
 │
 ├── 📚 Comprehensive System Documentation (Production Grade)
@@ -405,4 +407,3 @@ All files can be accessed directly using standard file links:
 | **Architecture Spec** | [`ARCHITECTURE.md`](file:///c:/Users/Mr%20Shadex/Startup/ARCHITECTURE.md) | Mermaid diagrams and cross-department pipelines. |
 | **Product Requirements** | [`PRD.md`](file:///c:/Users/Mr%20Shadex/Startup/PRD.md) | Core product requirements, problem statement, and goals. |
 | **Setup & Runbook** | [`SETUP.md`](file:///c:/Users/Mr%20Shadex/Startup/SETUP.md) | Step-by-step production deployment manual. |
-

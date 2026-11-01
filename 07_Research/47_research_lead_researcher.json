@@ -192,7 +192,7 @@
     },
     {
       "parameters": {
-        "sendTo": "=YOUR_OWNER_EMAIL",
+        "sendTo": "YOUR_OWNER_EMAIL",
         "subject": "=Lead brief: {{ $json.Company }} ({{ $json['Fit score'] }}/10)",
         "emailType": "text",
         "message": "={{ $json.email }}",

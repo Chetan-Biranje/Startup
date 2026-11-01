@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "n8n-bearer-token",
+      "description": "Rotated n8n MCP bearer token",
+      "password": true
+    }
+  ],
+  "servers": {
+    "n8n-mcp": {
+      "type": "http",
+      "url": "https://chetanbiranje.app.n8n.cloud/mcp-server/http",
+      "headers": {
+        "Authorization": "Bearer ${input:n8n-bearer-token}"
+      }
+    }
+  }
+}

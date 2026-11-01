@@ -161,7 +161,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "=⚠️ Order {{ $('Status changed?').item.json['Order ID'] }} ({{ $('Status changed?').item.json.Customer }}) is *{{ $('Status changed?').item.json.Status }}*: {{ $json.output.reason }}\nCall the customer yourself. Suggested message:\n{{ $json.output.message }}",
         "additionalFields": {}
       },

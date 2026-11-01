@@ -1081,7 +1081,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "new-lead",
+        "path": "bonus-new-lead",
         "options": {}
       },
       "id": "da44c861-5110-49ee-abd3-2a6ca2474caa",
@@ -1573,7 +1573,7 @@
       ],
       "parameters": {
         "httpMethod": "POST",
-        "path": "missed-call",
+        "path": "bonus-missed-call",
         "responseMode": "onReceived",
         "options": {}
       },

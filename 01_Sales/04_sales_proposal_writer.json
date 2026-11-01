@@ -95,7 +95,7 @@
           "values": [
             {
               "lookupColumn": "Stage",
-              "lookupValue": "=proposal"
+              "lookupValue": "proposal"
             }
           ]
         }

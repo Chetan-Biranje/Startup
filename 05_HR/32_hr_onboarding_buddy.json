@@ -95,7 +95,7 @@
           "values": [
             {
               "lookupColumn": "Status",
-              "lookupValue": "=onboarding"
+              "lookupValue": "onboarding"
             }
           ]
         }

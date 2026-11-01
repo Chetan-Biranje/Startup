@@ -54,7 +54,7 @@
           "values": [
             {
               "lookupColumn": "Status",
-              "lookupValue": "=pending"
+              "lookupValue": "pending"
             }
           ]
         }
@@ -121,7 +121,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_CA_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_CA_WHATSAPP",
         "textBody": "=📞 {{ $json.Client }} ne 12 din se *{{ $json.Document }}* nahi bheja (3 reminders ho gaye). Ek call kar lijiye: {{ $json.Phone }}",
         "additionalFields": {}
       },

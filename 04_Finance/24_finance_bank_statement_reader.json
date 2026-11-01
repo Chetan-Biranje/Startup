@@ -169,7 +169,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_CA_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_CA_WHATSAPP",
         "textBody": "=🧾 {{ $('Rows + checks').item.json.Client }}: {{ $('Rows + checks').item.json._count }} entries drafted.\nDr ₹{{ $('Rows + checks').item.json._total_dr.toLocaleString('en-IN') }} · Cr ₹{{ $('Rows + checks').item.json._total_cr.toLocaleString('en-IN') }}\n{{ $('Rows + checks').item.json._check }} need your check (Status = CHECK). Sheet: YOUR_GOOGLE_SHEET_URL",
         "additionalFields": {}
       },

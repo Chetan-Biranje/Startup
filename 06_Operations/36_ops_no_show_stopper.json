@@ -247,7 +247,7 @@
           "values": [
             {
               "lookupColumn": "Status",
-              "lookupValue": "=waiting"
+              "lookupValue": "waiting"
             }
           ]
         }

@@ -720,7 +720,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "={{ $json.text }}",
         "additionalFields": {}
       },
@@ -735,7 +735,7 @@
     },
     {
       "parameters": {
-        "chatId": "=YOUR_TELEGRAM_CHAT_ID",
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
         "text": "={{ $json.text }}",
         "additionalFields": {
           "appendAttribution": false

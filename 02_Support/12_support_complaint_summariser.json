@@ -249,7 +249,7 @@
         "resource": "message",
         "operation": "send",
         "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "recipientPhoneNumber": "=YOUR_OWNER_WHATSAPP",
+        "recipientPhoneNumber": "YOUR_OWNER_WHATSAPP",
         "textBody": "=🚨 {{ $('Ticket row').item.json.Priority.toUpperCase() }} complaint {{ $('Ticket row').item.json['Ticket ID'] }} ({{ $('Ticket row').item.json.Channel }})\n{{ $('Ticket row').item.json.Name }} · {{ $('Ticket row').item.json.Contact }}\n{{ $('Ticket row').item.json.Summary }}\nNo auto-reply sent. Please reply personally.",
         "additionalFields": {}
       },

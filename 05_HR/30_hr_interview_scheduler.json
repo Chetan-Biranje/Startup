@@ -54,7 +54,7 @@
           "values": [
             {
               "lookupColumn": "Status",
-              "lookupValue": "=shortlisted"
+              "lookupValue": "shortlisted"
             }
           ]
         }
