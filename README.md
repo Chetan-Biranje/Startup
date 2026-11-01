@@ -1,8 +1,8 @@
-# MAP 3.0: 50 AI employees, ₹0 salary
+# 200+ AI employees, ₹0 salary
 
-**Complete setup chahiye? Hum aapke business ke liye poora setup kar denge. Free call book karo:** https://calendar.google.com/calendar/appointments/schedules/AcZssZ2ZI6Dqh2h1_ZDYvYyeQvzmzxSRp9yCcr0mHPj0WDpbplw-pbnv-e_5B6NI8tjpjhDK8GYfs2ol
 
-50 ready-to-import n8n workflows, organised like a company: **7 departments × 7 agents + 1 CEO agent** who manages them all.
+
+200+ ready-to-import n8n workflows, organised like a company: **7 departments × 7 agents + 1 CEO agent** who manages them all.
 Each one uses Claude (Anthropic) as its brain. Every workflow has a yellow sticky note on the canvas with its own setup steps.
 
 ## Sales
